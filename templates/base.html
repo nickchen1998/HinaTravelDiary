@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hina 的旅行日記</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-base-100">
+    <!-- 導航欄 -->
+    <div class="navbar bg-base-200">
+        <div class="flex-1">
+            <a class="btn btn-ghost normal-case text-xl" href="/">
+                <i class="fas fa-camera text-primary"></i>
+                Hina 的旅行日記
+            </a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1">
+                <li><a href="/">首頁</a></li>
+                {% for country in highlighted_countries %}
+                    <li><a href="/country/{{ country.country_code }}/">{{ country.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- 主要內容 -->
+    <main class="container mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 頁腳 -->
+    <footer class="footer footer-center p-10 bg-base-200 text-base-content">
+        <div>
+            <div class="grid grid-flow-col gap-4">
+                <a class="link link-hover"><i class="fab fa-instagram"></i></a>
+                <a class="link link-hover"><i class="fab fa-facebook"></i></a>
+                <a class="link link-hover"><i class="fab fa-youtube"></i></a>
+            </div>
+            <p>© 2024 Hina 的旅行日記</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

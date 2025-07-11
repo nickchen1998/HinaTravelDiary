@@ -1,0 +1,33 @@
+# IDE 設定
+.idea/
+
+# Python 編譯後的暫存檔案
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# SQLite 資料庫
+db.sqlite3
+
+# 上傳檔案
+/media/
+
+# 環境設定檔（如果有的話）
+.env
+*.env
+
+# 虛擬環境（視你怎麼命名）
+venv/
+.env/
+
+# Docker volumes（如果用到）
+/postgres_data/
+/redis_data/
+/source_files/
+
+# Static files（視部署情況）
+/staticfiles/
+
+# VSCode 設定（如果你也使用 VSCode）
+.vscode/
