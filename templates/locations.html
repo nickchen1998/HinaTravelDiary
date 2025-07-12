@@ -184,56 +184,72 @@
         </a>
     </div>
 
-    <!-- Google Maps JavaScript API -->
+    <!-- Google Maps JavaScript -->
     {% if locations %}
-        {% if google_maps_api_key %}
-            <script async defer
-                    src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap">
-            </script>
-        {% else %}
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    document.getElementById('map').innerHTML = 
-                        '<div class="flex items-center justify-center h-full bg-warning/10 rounded-xl">' +
-                        '<div class="text-center">' +
-                        '<i class="fas fa-exclamation-triangle text-4xl text-warning mb-4"></i>' +
-                        '<p class="text-lg text-warning">Google Maps API 金鑰未設定</p>' +
-                        '<p class="text-sm text-base-content opacity-70">請在環境變數中設定 GOOGLE_MAPS_API_KEY</p>' +
-                        '</div>' +
-                        '</div>';
-                });
-            </script>
-        {% endif %}
-        
         <script>
+            let mapData = null;
+            let googleMapsLoaded = false;
+
+            // 動態載入地圖資料
+            async function loadMapData() {
+                try {
+                    const response = await fetch('/itineraries/{{ itinerary.id }}/map-data/');
+                    if (!response.ok) {
+                        throw new Error('無法載入地圖資料');
+                    }
+                    mapData = await response.json();
+                    
+                    if (mapData.api_key) {
+                        loadGoogleMapsAPI(mapData.api_key);
+                    } else {
+                        showError('warning', 'Google Maps API 金鑰未設定', '請在環境變數中設定 GOOGLE_MAPS_API_KEY');
+                    }
+                } catch (error) {
+                    console.error('載入地圖資料失敗:', error);
+                    showError('error', '載入地圖資料失敗', error.message);
+                }
+            }
+
+            // 動態載入 Google Maps API
+            function loadGoogleMapsAPI(apiKey) {
+                if (googleMapsLoaded) return;
+                
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap`;
+                script.async = true;
+                script.defer = true;
+                script.onerror = () => {
+                    showError('error', 'Google Maps 載入失敗', '請檢查網路連線或 API 金鑰');
+                };
+                document.head.appendChild(script);
+                googleMapsLoaded = true;
+            }
+
+            function showError(type, title, message) {
+                const bgColor = type === 'error' ? 'bg-error/10' : 'bg-warning/10';
+                const textColor = type === 'error' ? 'text-error' : 'text-warning';
+                const icon = type === 'error' ? 'fa-exclamation-triangle' : 'fa-exclamation-triangle';
+                
+                document.getElementById('map').innerHTML = 
+                    `<div class="flex items-center justify-center h-full ${bgColor} rounded-xl">` +
+                    '<div class="text-center">' +
+                    `<i class="fas ${icon} text-4xl ${textColor} mb-4"></i>` +
+                    `<p class="text-lg ${textColor}">${title}</p>` +
+                    `<p class="text-sm text-base-content opacity-70">${message}</p>` +
+                    '</div>' +
+                    '</div>';
+            }
+
             function initMap() {
-                // 收集有座標的景點
-                const locations = [
-                    {% for location in locations %}
-                        {% if location.latitude and location.longitude %}
-                            {
-                                name: "{{ location.name|escapejs }}",
-                                description: "{{ location.description|default:""|escapejs }}",
-                                address: "{{ location.address|default:""|escapejs }}",
-                                rating: {{ location.rating|default:"null" }},
-                                order: {{ location.order|default:forloop.counter }},
-                                lat: {{ location.latitude }},
-                                lng: {{ location.longitude }},
-                                url: "{{ location.google_maps_url|default:""|escapejs }}"
-                            }{% if not forloop.last %},{% endif %}
-                        {% endif %}
-                    {% endfor %}
-                ];
+                if (!mapData || !mapData.locations) {
+                    showError('warning', '暫無地點座標資訊', '請在管理後台為景點添加 Google Maps 網址');
+                    return;
+                }
+
+                const locations = mapData.locations;
 
                 if (locations.length === 0) {
-                    document.getElementById('map').innerHTML = 
-                        '<div class="flex items-center justify-center h-full bg-base-200 rounded-xl">' +
-                        '<div class="text-center">' +
-                        '<i class="fas fa-map-marker-alt text-4xl text-base-content opacity-50 mb-4"></i>' +
-                        '<p class="text-lg text-base-content opacity-70">暫無地點座標資訊</p>' +
-                        '<p class="text-sm text-base-content opacity-50">請在管理後台為景點添加 Google Maps 網址</p>' +
-                        '</div>' +
-                        '</div>';
+                    showError('warning', '暫無地點座標資訊', '請在管理後台為景點添加 Google Maps 網址');
                     return;
                 }
 
@@ -259,6 +275,27 @@
 
                 // 調整地圖範圍以顯示所有標記
                 map.fitBounds(bounds);
+
+                // 創建路線路徑（按順序連接）
+                const pathCoordinates = locations
+                    .sort((a, b) => a.order - b.order)
+                    .map(location => ({
+                        lat: location.lat,
+                        lng: location.lng
+                    }));
+
+                // 添加路線（直線連接）
+                if (pathCoordinates.length > 1) {
+                    const routePath = new google.maps.Polyline({
+                        path: pathCoordinates,
+                        geodesic: true,
+                        strokeColor: '#3b82f6',
+                        strokeOpacity: 1.0,
+                        strokeWeight: 3
+                    });
+
+                    routePath.setMap(map);
+                }
 
                 // 為每個景點添加標記
                 locations.forEach((location, index) => {
@@ -338,15 +375,13 @@
 
             // 錯誤處理
             window.gm_authFailure = function() {
-                document.getElementById('map').innerHTML = 
-                    '<div class="flex items-center justify-center h-full bg-error/10 rounded-xl">' +
-                    '<div class="text-center">' +
-                    '<i class="fas fa-exclamation-triangle text-4xl text-error mb-4"></i>' +
-                    '<p class="text-lg text-error">Google Maps API 金鑰錯誤</p>' +
-                    '<p class="text-sm text-base-content opacity-70">請檢查 API 金鑰設定</p>' +
-                    '</div>' +
-                    '</div>';
+                showError('error', 'Google Maps API 認證失敗', '請檢查 API 金鑰設定');
             };
+
+            // 頁面載入時開始載入地圖資料
+            document.addEventListener('DOMContentLoaded', function() {
+                loadMapData();
+            });
         </script>
     {% endif %}
 {% endblock %}
