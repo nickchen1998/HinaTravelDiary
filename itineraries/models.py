@@ -68,7 +68,7 @@ class Location(models.Model):
 def location_photo_upload_path(instance, filename):
     ext = filename.split('.')[-1]
     filename = f"{instance.uuid}.{ext}"
-    return f"location_photos/{filename}"
+    return f"location_photos/{instance.location.itinerary.journey.city}/{filename}"
 
 
 class LocationPhoto(models.Model):

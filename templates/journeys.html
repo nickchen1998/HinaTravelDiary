@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <!-- 麵包屑導航 -->
+    <div class="breadcrumbs text-sm mb-6">
+        <ul>
+            <li><a href="/">首頁</a></li>
+            <li>{{ country.name }}</li>
+            <li>旅程列表</li>
+        </ul>
+    </div>
+
+    <!-- 國家資訊 -->
+    <div class="hero bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg mb-8">
+        <div class="hero-content text-center">
+            <div class="max-w-md">
+                <h1 class="text-5xl font-bold text-primary mb-4">
+                    <i class="fas fa-globe-americas mr-3"></i>
+                    {{ country.name }}
+                </h1>
+                <p class="py-6 text-lg">
+                    探索 {{ country.name }} 的精彩旅程
+                </p>
+                <div class="flex justify-center items-center gap-4 text-sm">
+                    <div class="badge badge-primary badge-outline">
+                        <i class="fas fa-flag mr-1"></i>
+                        {{ country.english_name }}
+                    </div>
+                    <div class="badge badge-secondary badge-outline">
+                        <i class="fas fa-map mr-1"></i>
+                        {{ country.country_code }}
+                    </div>
+                    <div class="badge badge-accent badge-outline">
+                        <i class="fas fa-route mr-1"></i>
+                        {{ journeys|length }} 個旅程
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 旅程列表 -->
+    <div class="mb-8">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-base-content mb-4">
+                <i class="fas fa-suitcase-rolling text-secondary mr-2"></i>
+                旅程列表
+            </h2>
+            <p class="text-lg text-base-content opacity-70">
+                {{ country.name }} 的所有旅程
+            </p>
+        </div>
+
+        {% if journeys %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for journey in journeys %}
+                    <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 group">
+                        {% if journey.journeyphoto %}
+                            <figure class="px-4 pt-4">
+                                <img src="{{ journey.journeyphoto.image.url }}" 
+                                     alt="{{ journey.title }}"
+                                     class="rounded-xl object-cover w-full h-48 group-hover:scale-105 transition-transform duration-300">
+                            </figure>
+                        {% endif %}
+                        
+                        <div class="card-body">
+                            <h3 class="card-title text-xl mb-3">
+                                <i class="fas fa-map-marked-alt text-primary mr-2"></i>
+                                {{ journey.title }}
+                            </h3>
+                            
+                            <p class="text-base-content opacity-80 mb-4 line-clamp-3">
+                                {{ journey.description|truncatechars:120 }}
+                            </p>
+                            
+                            <!-- 旅程資訊 -->
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <div class="badge badge-outline">
+                                    <i class="fas fa-calendar-alt mr-1"></i>
+                                    {{ journey.start_date|date:"Y年m月d日" }}
+                                </div>
+                                <div class="badge badge-outline">
+                                    <i class="fas fa-calendar-check mr-1"></i>
+                                    {{ journey.end_date|date:"Y年m月d日" }}
+                                </div>
+                                <div class="badge badge-outline">
+                                    <i class="fas fa-route mr-1"></i>
+                                    {{ journey.itinerary_count }} 個行程
+                                </div>
+                                {% if journey.is_highlighted %}
+                                    <div class="badge badge-warning">
+                                        <i class="fas fa-star mr-1"></i>
+                                        精選
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 操作按鈕 -->
+                            <div class="card-actions justify-end">
+                                <a href="/journeys/{{ journey.id }}/itineraries/" 
+                                   class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    查看行程
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <div class="mb-4">
+                    <i class="fas fa-exclamation-circle text-6xl text-warning"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-base-content mb-4">暫無旅程</h3>
+                <p class="text-lg text-base-content opacity-70 mb-6">
+                    {{ country.name }} 還沒有任何旅程記錄
+                </p>
+                <a href="/" class="btn btn-primary">
+                    <i class="fas fa-home mr-2"></i>
+                    返回首頁
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 返回按鈕 -->
+    {% if journeys %}
+        <div class="flex justify-center gap-4 mt-8">
+            <a href="/" class="btn btn-outline btn-primary">
+                <i class="fas fa-home mr-2"></i>
+                返回首頁
+            </a>
+        </div>
+    {% endif %}
+
+{% endblock %}

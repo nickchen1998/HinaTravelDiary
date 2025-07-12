@@ -29,7 +29,7 @@
         <ul class="menu menu-horizontal px-1">
             <li><a href="/">首頁</a></li>
             {% for country in highlighted_countries %}
-                <li><a href="/country/{{ country.country_code }}/">{{ country.name }}</a></li>
+                <li><a href="/countries/{{ country.id }}/journeys/">{{ country.name }}</a></li>
             {% endfor %}
         </ul>
     </div>
