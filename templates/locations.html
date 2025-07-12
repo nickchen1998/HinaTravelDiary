@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ itinerary.title }} - 景點列表 - Hina 的旅行日記{% endblock %}
+
+{% block content %}
+    <!-- 麵包屑導航 -->
+    <div class="breadcrumbs text-sm mb-6">
+        <ul>
+            <li><a href="/">首頁</a></li>
+            <li><a href="/journeys/{{ itinerary.journey.id }}/itineraries/">{{ itinerary.journey.title }}</a></li>
+            <li>{{ itinerary.title }}</li>
+            <li>景點列表</li>
+        </ul>
+    </div>
+
+    <!-- 行程資訊 -->
+    <div class="hero bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg mb-8">
+        <div class="hero-content text-center">
+            <div class="max-w-md">
+                <h1 class="text-4xl font-bold text-primary mb-4">
+                    <i class="fas fa-map-marked-alt mr-3"></i>
+                    {{ itinerary.title }}
+                </h1>
+                <p class="py-6">{{ itinerary.description }}</p>
+                <div class="flex justify-center items-center gap-4 text-sm">
+                    <div class="badge badge-primary badge-outline">
+                        <i class="fas fa-route mr-1"></i>
+                        {{ itinerary.journey.title }}
+                    </div>
+                    <div class="badge badge-secondary badge-outline">
+                        <i class="fas fa-calendar mr-1"></i>
+                        {{ itinerary.start_date|date:"Y年m月d日" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 景點列表 -->
+    <div class="mb-8">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-base-content mb-4">
+                <i class="fas fa-map-marker-alt text-error mr-2"></i>
+                景點列表
+            </h2>
+            <p class="text-lg text-base-content opacity-70">
+                探索這個行程的所有精彩景點
+            </p>
+        </div>
+
+        {% if locations %}
+            <div class="space-y-6">
+                {% for location in locations %}
+                    <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300">
+                        <div class="card-body">
+                            <div class="flex items-start gap-6">
+                                <!-- 順序標籤 -->
+                                <div class="flex-shrink-0">
+                                    <div class="badge badge-primary badge-lg">
+                                        <i class="fas fa-map-pin mr-1"></i>
+                                        {{ location.order|default:forloop.counter }}
+                                    </div>
+                                </div>
+                                
+                                <!-- 景點資訊 -->
+                                <div class="flex-1">
+                                    <h3 class="card-title text-xl font-bold mb-3">
+                                        <i class="fas fa-location-dot text-error mr-2"></i>
+                                        {{ location.name }}
+                                    </h3>
+                                    
+                                    {% if location.description %}
+                                        <p class="text-base-content opacity-80 mb-4 leading-relaxed">
+                                            {{ location.description }}
+                                        </p>
+                                    {% endif %}
+                                    
+                                    <!-- 地點資訊 -->
+                                    <div class="flex flex-wrap items-center gap-4 mb-4">
+                                        {% if location.address %}
+                                            <div class="badge badge-outline">
+                                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                                {{ location.address|truncatechars:50 }}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if location.rating %}
+                                            <div class="badge badge-warning badge-outline">
+                                                <i class="fas fa-star mr-1"></i>
+                                                {{ location.rating }}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if location.place_types %}
+                                            <div class="badge badge-info badge-outline">
+                                                <i class="fas fa-tag mr-1"></i>
+                                                {{ location.place_types }}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if location.google_maps_url %}
+                                            <a href="{{ location.google_maps_url }}" 
+                                               target="_blank" 
+                                               class="btn btn-sm btn-outline btn-primary">
+                                                <i class="fas fa-external-link-alt mr-1"></i>
+                                                在 Google Maps 查看
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 景點照片 -->
+                            {% if location.locationphoto_set.all %}
+                                <div class="mt-6">
+                                    <h4 class="text-lg font-semibold mb-3 flex items-center">
+                                        <i class="fas fa-images text-info mr-2"></i>
+                                        景點照片
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {% for photo in location.locationphoto_set.all %}
+                                            <div class="card bg-base-100 shadow-md">
+                                                <figure class="px-4 pt-4">
+                                                    <img src="{{ photo.image.url }}" 
+                                                         alt="{{ photo.caption|default:location.name }}"
+                                                         class="rounded-lg object-cover w-full h-48">
+                                                </figure>
+                                                {% if photo.caption %}
+                                                    <div class="card-body pt-2">
+                                                        <p class="text-sm text-base-content opacity-70">
+                                                            {{ photo.caption }}
+                                                        </p>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <div class="mb-4">
+                    <i class="fas fa-exclamation-circle text-4xl text-warning"></i>
+                </div>
+                <h3 class="text-xl font-bold text-base-content mb-2">暫無景點</h3>
+                <p class="text-base-content opacity-70">這個行程還沒有添加任何景點</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 返回按鈕 -->
+    <div class="flex justify-center gap-4 mt-8">
+        <a href="/journeys/{{ itinerary.journey.id }}/itineraries/" class="btn btn-outline btn-primary">
+            <i class="fas fa-arrow-left mr-2"></i>
+            返回行程列表
+        </a>
+        <a href="/" class="btn btn-outline btn-secondary">
+            <i class="fas fa-home mr-2"></i>
+            返回首頁
+        </a>
+    </div>
+{% endblock %}

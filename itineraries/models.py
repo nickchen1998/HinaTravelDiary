@@ -8,7 +8,7 @@ class Itinerary(models.Model):
     journey = models.ForeignKey(Journey, on_delete=models.CASCADE)
 
     title = models.CharField(max_length=200, help_text="行程標題")
-    description = models.TextField(help_text="行程描述")
+    description = models.CharField(max_length=300, help_text="行程描述")
     start_date = models.DateField(help_text="行程開始日期")
 
     updated_at = models.DateTimeField(auto_now=True)
@@ -45,10 +45,12 @@ class ItineraryPhoto(models.Model):
 
 class Location(models.Model):
     itinerary = models.ForeignKey(Itinerary, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100, help_text="地點名稱")
-    description = models.TextField(blank=True, null=True, help_text="地點描述")
-    latitude = models.FloatField(help_text="緯度")
-    longitude = models.FloatField(help_text="經度")
+    name = models.CharField(max_length=200, help_text="地點名稱")
+    description = models.CharField(max_length=300, blank=True, null=True, help_text="地點描述")
+    google_maps_url = models.CharField(max_length=1000, blank=True, null=True, help_text="Google Maps 地點網址")
+    address = models.CharField(max_length=500, blank=True, null=True, help_text="地址")
+    rating = models.FloatField(blank=True, null=True, help_text="評分")
+    place_types = models.CharField(max_length=200, blank=True, null=True, help_text="地點類型")
     order = models.PositiveIntegerField(default=0, help_text="在行程中的順序")
     created_at = models.DateTimeField(auto_now_add=True)
 

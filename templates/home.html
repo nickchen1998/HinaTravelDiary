@@ -149,7 +149,8 @@
         <div class="container mx-auto px-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
                 {% for journey in recent_journeys %}
-                    <div class="card bg-base-100 shadow-xl">
+                    <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer"
+                         onclick="window.location.href='/journeys/{{ journey.id }}/itineraries'">
                         <div class="card-body">
                             <div class="flex items-center justify-between mb-2">
                                 <div class="badge badge-primary">{{ journey.created_at|date:"Y年m月d日" }}</div>

@@ -7,7 +7,7 @@ class JourneyPhotoInline(admin.StackedInline):
     model = JourneyPhoto
     extra = 0
     max_num = 1
-    readonly_fields = ['uuid', 'created_at', 'image_preview']
+    readonly_fields = ['created_at', 'image_preview']
     
     def image_preview(self, obj):
         if obj.image:

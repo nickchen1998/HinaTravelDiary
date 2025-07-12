@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ journey.title }} - 行程列表 - Hina 的旅行日記{% endblock %}
+
+{% block content %}
+    <!-- 麵包屑導航 -->
+    <div class="breadcrumbs text-sm mb-6">
+        <ul>
+            <li><a href="/">首頁</a></li>
+            <li>{{ journey.title }}</li>
+            <li>行程列表</li>
+        </ul>
+    </div>
+
+    <!-- 旅程資訊 -->
+    <div class="hero bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg mb-8">
+        <div class="hero-content text-center">
+            <div class="max-w-md">
+                <h1 class="text-5xl font-bold text-primary mb-4">
+                    <i class="fas fa-route mr-3"></i>
+                    {{ journey.title }}
+                </h1>
+                <p class="py-6">{{ journey.description }}</p>
+                <div class="flex justify-center items-center gap-4 text-sm">
+                    <div class="badge badge-primary badge-outline">
+                        <i class="fas fa-map-marker-alt mr-1"></i>
+                        {{ journey.country.name }}
+                    </div>
+                    <div class="badge badge-secondary badge-outline">
+                        <i class="fas fa-calendar mr-1"></i>
+                        {{ journey.start_date|date:"Y年m月d日" }} - {{ journey.end_date|date:"Y年m月d日" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 行程列表 -->
+    <div class="mb-8">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-base-content mb-4">
+                <i class="fas fa-list-ul text-info mr-2"></i>
+                行程列表
+            </h2>
+            <p class="text-lg text-base-content opacity-70">
+                探索這次旅程的所有精彩行程
+            </p>
+        </div>
+
+        {% if itineraries %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for itinerary in itineraries %}
+                    <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-105"
+                         onclick="window.location.href='/itineraries/{{ itinerary.id }}/locations/'">
+                        <div class="card-body">
+                            <!-- 行程照片 -->
+                            <div class="mb-4">
+                                {% if itinerary.itineraryphoto %}
+                                    <div class="avatar w-full">
+                                        <div class="w-full h-48 rounded-lg">
+                                            <img src="{{ itinerary.itineraryphoto.image.url }}" 
+                                                 alt="{{ itinerary.itineraryphoto.caption|default:itinerary.title }}"
+                                                 class="w-full h-full object-cover">
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="avatar placeholder w-full">
+                                        <div class="w-full h-48 bg-neutral text-neutral-content rounded-lg">
+                                            <i class="fas fa-camera text-4xl"></i>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- 行程資訊 -->
+                            <div class="mb-2">
+                                <div class="badge badge-info badge-outline mb-2">
+                                    <i class="fas fa-calendar mr-1"></i>
+                                    {{ itinerary.start_date|date:"Y年m月d日" }}
+                                </div>
+                            </div>
+                            
+                            <h3 class="card-title text-lg font-bold mb-2">
+                                <i class="fas fa-map-signs text-primary mr-2"></i>
+                                {{ itinerary.title }}
+                            </h3>
+                            
+                            <p class="text-sm text-base-content opacity-70 leading-relaxed">
+                                {{ itinerary.description|truncatewords:15 }}
+                            </p>
+                            
+                            <div class="card-actions justify-end mt-4">
+                                <div class="badge badge-outline">
+                                    <i class="fas fa-map-marker-alt mr-1"></i>
+                                    {{ itinerary.location_set.count }} 個地點
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <div class="mb-4">
+                    <i class="fas fa-exclamation-circle text-4xl text-warning"></i>
+                </div>
+                <h3 class="text-xl font-bold text-base-content mb-2">暫無行程</h3>
+                <p class="text-base-content opacity-70">這個旅程還沒有添加任何行程</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- 返回按鈕 -->
+    <div class="text-center mt-8">
+        <a href="/" class="btn btn-outline btn-primary">
+            <i class="fas fa-arrow-left mr-2"></i>
+            返回首頁
+        </a>
+    </div>
+{% endblock %}

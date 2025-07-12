@@ -27,6 +27,7 @@ admin.site.index_title = settings.ADMIN_INDEX_TITLE
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('homepage.urls')),
+    path('', include('itineraries.urls')),
 ]
 
 # Serve media files in development
