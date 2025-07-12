@@ -49,6 +49,8 @@ class Location(models.Model):
     description = models.CharField(max_length=300, blank=True, null=True, help_text="地點描述")
     google_maps_url = models.CharField(max_length=1000, blank=True, null=True, help_text="Google Maps 地點網址")
     address = models.CharField(max_length=500, blank=True, null=True, help_text="地址")
+    latitude = models.FloatField(blank=True, null=True, help_text="緯度")
+    longitude = models.FloatField(blank=True, null=True, help_text="經度")
     rating = models.FloatField(blank=True, null=True, help_text="評分")
     place_types = models.CharField(max_length=200, blank=True, null=True, help_text="地點類型")
     order = models.PositiveIntegerField(default=0, help_text="在行程中的順序")

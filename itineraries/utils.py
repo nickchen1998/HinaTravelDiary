@@ -314,6 +314,8 @@ class GoogleMapsParser:
                 'name': address or f"地點 ({lat:.6f}, {lng:.6f})",
                 'description': f'從 Google Maps 座標匯入: {original_url}',
                 'address': address,
+                'latitude': lat,
+                'longitude': lng,
                 'order': 1
             }
             
@@ -356,6 +358,8 @@ class GoogleMapsParser:
                 'name': place_details.get('name', '未知地點'),
                 'description': '\n'.join(description_parts),
                 'address': place_details.get('formatted_address'),
+                'latitude': location_data.get('lat'),
+                'longitude': location_data.get('lng'),
                 'rating': place_details.get('rating'),
                 'place_types': ', '.join(types_zh) if types_zh else None,
                 'order': 1
@@ -391,6 +395,8 @@ class GoogleMapsParser:
                 'name': search_result.get('name', '未知地點'),
                 'description': '\n'.join(description_parts),
                 'address': search_result.get('formatted_address'),
+                'latitude': location_data.get('lat'),
+                'longitude': location_data.get('lng'),
                 'rating': search_result.get('rating'),
                 'place_types': ', '.join(types_zh) if types_zh else None,
                 'order': 1
@@ -546,6 +552,12 @@ def update_location_from_google_maps(location, url: str) -> bool:
             # 更新地點資訊（只更新有值的欄位）
             if location_data.get('address'):
                 location.address = location_data['address']
+            
+            if location_data.get('latitude'):
+                location.latitude = location_data['latitude']
+            
+            if location_data.get('longitude'):
+                location.longitude = location_data['longitude']
             
             if location_data.get('rating'):
                 location.rating = location_data['rating']

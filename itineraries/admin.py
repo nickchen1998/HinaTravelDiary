@@ -186,7 +186,7 @@ class LocationAdmin(admin.ModelAdmin):
             'description': '📝 輸入地點名稱和描述<br/>🔗 Google Maps 網址在建立後無法修改'
         }),
         ('自動填入資訊', {
-            'fields': ('address', 'rating', 'place_types'),
+            'fields': ('address', 'latitude', 'longitude', 'rating', 'place_types'),
             'description': '🤖 這些欄位會在儲存時自動從 Google Maps 獲取',
             'classes': ('collapse',)
         }),
@@ -194,7 +194,7 @@ class LocationAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         """根據是否為新增物件來決定唯讀欄位"""
-        readonly = ['address', 'rating', 'place_types']
+        readonly = ['address', 'latitude', 'longitude', 'rating', 'place_types']
         
         # 如果是編輯現有物件（obj 存在），則將 google_maps_url 設為唯讀
         if obj:

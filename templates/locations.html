@@ -35,6 +35,27 @@
         </div>
     </div>
 
+    <!-- 地圖區域 -->
+    {% if locations %}
+        <div class="mb-8">
+            <div class="text-center mb-6">
+                <h2 class="text-3xl font-bold text-base-content mb-4">
+                    <i class="fas fa-map text-primary mr-2"></i>
+                    景點地圖
+                </h2>
+                <p class="text-lg text-base-content opacity-70">
+                    所有景點的地理位置一覽
+                </p>
+            </div>
+            
+            <div class="card bg-base-100 shadow-xl mb-8">
+                <div class="card-body p-0">
+                    <div id="map" style="height: 400px; width: 100%; border-radius: 1rem;"></div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
     <!-- 景點列表 -->
     <div class="mb-8">
         <div class="text-center mb-8">
@@ -162,4 +183,170 @@
             返回首頁
         </a>
     </div>
+
+    <!-- Google Maps JavaScript API -->
+    {% if locations %}
+        {% if google_maps_api_key %}
+            <script async defer
+                    src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap">
+            </script>
+        {% else %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    document.getElementById('map').innerHTML = 
+                        '<div class="flex items-center justify-center h-full bg-warning/10 rounded-xl">' +
+                        '<div class="text-center">' +
+                        '<i class="fas fa-exclamation-triangle text-4xl text-warning mb-4"></i>' +
+                        '<p class="text-lg text-warning">Google Maps API 金鑰未設定</p>' +
+                        '<p class="text-sm text-base-content opacity-70">請在環境變數中設定 GOOGLE_MAPS_API_KEY</p>' +
+                        '</div>' +
+                        '</div>';
+                });
+            </script>
+        {% endif %}
+        
+        <script>
+            function initMap() {
+                // 收集有座標的景點
+                const locations = [
+                    {% for location in locations %}
+                        {% if location.latitude and location.longitude %}
+                            {
+                                name: "{{ location.name|escapejs }}",
+                                description: "{{ location.description|default:""|escapejs }}",
+                                address: "{{ location.address|default:""|escapejs }}",
+                                rating: {{ location.rating|default:"null" }},
+                                order: {{ location.order|default:forloop.counter }},
+                                lat: {{ location.latitude }},
+                                lng: {{ location.longitude }},
+                                url: "{{ location.google_maps_url|default:""|escapejs }}"
+                            }{% if not forloop.last %},{% endif %}
+                        {% endif %}
+                    {% endfor %}
+                ];
+
+                if (locations.length === 0) {
+                    document.getElementById('map').innerHTML = 
+                        '<div class="flex items-center justify-center h-full bg-base-200 rounded-xl">' +
+                        '<div class="text-center">' +
+                        '<i class="fas fa-map-marker-alt text-4xl text-base-content opacity-50 mb-4"></i>' +
+                        '<p class="text-lg text-base-content opacity-70">暫無地點座標資訊</p>' +
+                        '<p class="text-sm text-base-content opacity-50">請在管理後台為景點添加 Google Maps 網址</p>' +
+                        '</div>' +
+                        '</div>';
+                    return;
+                }
+
+                // 計算地圖中心點
+                let bounds = new google.maps.LatLngBounds();
+                locations.forEach(location => {
+                    bounds.extend(new google.maps.LatLng(location.lat, location.lng));
+                });
+
+                // 初始化地圖
+                const map = new google.maps.Map(document.getElementById('map'), {
+                    center: bounds.getCenter(),
+                    zoom: 13,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP,
+                    styles: [
+                        {
+                            featureType: "poi",
+                            elementType: "labels",
+                            stylers: [{ visibility: "on" }]
+                        }
+                    ]
+                });
+
+                // 調整地圖範圍以顯示所有標記
+                map.fitBounds(bounds);
+
+                // 為每個景點添加標記
+                locations.forEach((location, index) => {
+                    const marker = new google.maps.Marker({
+                        position: { lat: location.lat, lng: location.lng },
+                        map: map,
+                        title: location.name,
+                        label: {
+                            text: location.order.toString(),
+                            color: 'white',
+                            fontWeight: 'bold'
+                        },
+                        icon: {
+                            url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                            scaledSize: new google.maps.Size(40, 40)
+                        }
+                    });
+
+                    // 創建資訊視窗內容
+                    let infoContent = `
+                        <div style="max-width: 300px; padding: 10px;">
+                            <h3 style="margin: 0 0 8px 0; color: #1f2937; font-size: 16px; font-weight: bold;">
+                                ${location.order}. ${location.name}
+                            </h3>
+                    `;
+
+                    if (location.description) {
+                        infoContent += `<p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">${location.description}</p>`;
+                    }
+
+                    if (location.address) {
+                        infoContent += `
+                            <p style="margin: 0 0 8px 0; font-size: 13px; color: #9ca3af;">
+                                <i class="fas fa-map-marker-alt" style="margin-right: 4px;"></i>
+                                ${location.address}
+                            </p>
+                        `;
+                    }
+
+                    if (location.rating) {
+                        infoContent += `
+                            <p style="margin: 0 0 8px 0; font-size: 13px; color: #f59e0b;">
+                                <i class="fas fa-star" style="margin-right: 4px;"></i>
+                                評分: ${location.rating}
+                            </p>
+                        `;
+                    }
+
+                    if (location.url) {
+                        infoContent += `
+                            <a href="${location.url}" target="_blank" 
+                               style="display: inline-block; margin-top: 8px; padding: 4px 8px; 
+                                      background-color: #3b82f6; color: white; text-decoration: none; 
+                                      border-radius: 4px; font-size: 12px;">
+                                <i class="fas fa-external-link-alt" style="margin-right: 4px;"></i>
+                                在 Google Maps 查看
+                            </a>
+                        `;
+                    }
+
+                    infoContent += '</div>';
+
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: infoContent
+                    });
+
+                    marker.addListener('click', () => {
+                        infoWindow.open(map, marker);
+                    });
+                });
+
+                // 如果只有一個地點，設置適當的縮放級別
+                if (locations.length === 1) {
+                    map.setZoom(15);
+                }
+            }
+
+            // 錯誤處理
+            window.gm_authFailure = function() {
+                document.getElementById('map').innerHTML = 
+                    '<div class="flex items-center justify-center h-full bg-error/10 rounded-xl">' +
+                    '<div class="text-center">' +
+                    '<i class="fas fa-exclamation-triangle text-4xl text-error mb-4"></i>' +
+                    '<p class="text-lg text-error">Google Maps API 金鑰錯誤</p>' +
+                    '<p class="text-sm text-base-content opacity-70">請檢查 API 金鑰設定</p>' +
+                    '</div>' +
+                    '</div>';
+            };
+        </script>
+    {% endif %}
 {% endblock %}

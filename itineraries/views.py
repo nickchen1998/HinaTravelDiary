@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.conf import settings
 from journeys.models import Journey
 from .models import Itinerary, Location
 
@@ -21,5 +22,6 @@ def location_list(request, itinerary_id):
     context = {
         'itinerary': itinerary,
         'locations': locations,
+        'google_maps_api_key': getattr(settings, 'GOOGLE_MAPS_API_KEY', ''),
     }
     return render(request, 'locations.html', context)
