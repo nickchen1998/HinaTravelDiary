@@ -1,8 +1,30 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.contrib import messages
+from django import forms
+from django.core.exceptions import ValidationError
 from .models import Itinerary, ItineraryPhoto, Location, LocationPhoto
 from .utils import update_location_from_google_maps
+
+
+class ItineraryForm(forms.ModelForm):
+    """自定義行程表單，限制日期範圍"""
+    
+    class Meta:
+        model = Itinerary
+        fields = '__all__'
+    
+    def clean_start_date(self):
+        start_date = self.cleaned_data.get('start_date')
+        journey = self.cleaned_data.get('journey')
+        
+        if start_date and journey:
+            if start_date < journey.start_date or start_date > journey.end_date:
+                raise ValidationError(
+                    f'行程開始日期必須在旅程期間內 ({journey.start_date} 到 {journey.end_date})'
+                )
+        
+        return start_date
 
 
 class ItineraryPhotoInline(admin.StackedInline):
@@ -24,6 +46,7 @@ class ItineraryPhotoInline(admin.StackedInline):
 class LocationPhotoInline(admin.TabularInline):
     model = LocationPhoto
     extra = 0
+    max_num = 3
     readonly_fields = ['created_at', 'image_preview']
 
     def image_preview(self, obj):
@@ -46,12 +69,13 @@ class LocationInline(admin.TabularInline):
 
 @admin.register(Itinerary)
 class ItineraryAdmin(admin.ModelAdmin):
+    form = ItineraryForm
     list_display = ['title', 'journey', 'start_date', 'location_count', 'has_photo', 'created_at']
-    list_filter = ['journey__country', 'start_date', 'created_at']
-    search_fields = ['title', 'description', 'journey__title']
-    date_hierarchy = 'start_date'
+    list_filter = ['journey__title', ]
+    ordering = ['start_date']
     inlines = [ItineraryPhotoInline, LocationInline]
     list_per_page = 20
+    readonly_fields = ['created_at', 'start_date', 'journey']
 
     fieldsets = (
         ('基本資訊', {
