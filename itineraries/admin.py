@@ -19,9 +19,26 @@ class ItineraryForm(forms.ModelForm):
         journey = self.cleaned_data.get('journey')
         
         if start_date and journey:
+            # 檢查日期是否在旅程起迄日範圍內
             if start_date < journey.start_date or start_date > journey.end_date:
                 raise ValidationError(
                     f'行程開始日期必須在旅程期間內 ({journey.start_date} 到 {journey.end_date})'
+                )
+            
+            # 檢查該日期是否已經存在於該旅程的其他行程中
+            existing_itineraries = Itinerary.objects.filter(
+                journey=journey,
+                start_date=start_date
+            )
+            
+            # 如果是編輯現有行程，排除自己
+            if self.instance and self.instance.pk:
+                existing_itineraries = existing_itineraries.exclude(pk=self.instance.pk)
+            
+            if existing_itineraries.exists():
+                existing_itinerary = existing_itineraries.first()
+                raise ValidationError(
+                    f'該日期已被行程「{existing_itinerary.title}」使用，請選擇其他日期'
                 )
         
         return start_date
@@ -75,7 +92,7 @@ class ItineraryAdmin(admin.ModelAdmin):
     ordering = ['start_date']
     inlines = [ItineraryPhotoInline, LocationInline]
     list_per_page = 20
-    readonly_fields = ['created_at', 'start_date', 'journey']
+    readonly_fields = ['created_at',]
 
     fieldsets = (
         ('基本資訊', {
