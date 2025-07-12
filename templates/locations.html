@@ -60,20 +60,20 @@
                                         {{ location.order|default:forloop.counter }}
                                     </div>
                                 </div>
-                                
+
                                 <!-- 景點資訊 -->
                                 <div class="flex-1">
                                     <h3 class="card-title text-xl font-bold mb-3">
                                         <i class="fas fa-location-dot text-error mr-2"></i>
                                         {{ location.name }}
                                     </h3>
-                                    
+
                                     {% if location.description %}
                                         <p class="text-base-content opacity-80 mb-4 leading-relaxed">
                                             {{ location.description }}
                                         </p>
                                     {% endif %}
-                                    
+
                                     <!-- 地點資訊 -->
                                     <div class="flex flex-wrap items-center gap-4 mb-4">
                                         {% if location.address %}
@@ -82,24 +82,24 @@
                                                 {{ location.address|truncatechars:50 }}
                                             </div>
                                         {% endif %}
-                                        
+
                                         {% if location.rating %}
                                             <div class="badge badge-warning badge-outline">
                                                 <i class="fas fa-star mr-1"></i>
                                                 {{ location.rating }}
                                             </div>
                                         {% endif %}
-                                        
+
                                         {% if location.place_types %}
                                             <div class="badge badge-info badge-outline">
                                                 <i class="fas fa-tag mr-1"></i>
                                                 {{ location.place_types }}
                                             </div>
                                         {% endif %}
-                                        
+
                                         {% if location.google_maps_url %}
-                                            <a href="{{ location.google_maps_url }}" 
-                                               target="_blank" 
+                                            <a href="{{ location.google_maps_url }}"
+                                               target="_blank"
                                                class="btn btn-sm btn-outline btn-primary">
                                                 <i class="fas fa-external-link-alt mr-1"></i>
                                                 在 Google Maps 查看
@@ -108,7 +108,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- 景點照片 -->
                             {% if location.locationphoto_set.all %}
                                 <div class="mt-6">
@@ -120,7 +120,7 @@
                                         {% for photo in location.locationphoto_set.all %}
                                             <div class="card bg-base-100 shadow-md">
                                                 <figure class="px-4 pt-4">
-                                                    <img src="{{ photo.image.url }}" 
+                                                    <img src="{{ photo.image.url }}"
                                                          alt="{{ photo.caption|default:location.name }}"
                                                          class="rounded-lg object-cover w-full h-48">
                                                 </figure>

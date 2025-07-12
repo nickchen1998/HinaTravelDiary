@@ -60,7 +60,7 @@
                                 {% if itinerary.itineraryphoto %}
                                     <div class="avatar w-full">
                                         <div class="w-full h-48 rounded-lg">
-                                            <img src="{{ itinerary.itineraryphoto.image.url }}" 
+                                            <img src="{{ itinerary.itineraryphoto.image.url }}"
                                                  alt="{{ itinerary.itineraryphoto.caption|default:itinerary.title }}"
                                                  class="w-full h-full object-cover">
                                         </div>
@@ -81,16 +81,16 @@
                                     {{ itinerary.start_date|date:"Y年m月d日" }}
                                 </div>
                             </div>
-                            
+
                             <h3 class="card-title text-lg font-bold mb-2">
                                 <i class="fas fa-map-signs text-primary mr-2"></i>
                                 {{ itinerary.title }}
                             </h3>
-                            
+
                             <p class="text-sm text-base-content opacity-70 leading-relaxed">
                                 {{ itinerary.description|truncatewords:15 }}
                             </p>
-                            
+
                             <div class="card-actions justify-end mt-4">
                                 <div class="badge badge-outline">
                                     <i class="fas fa-map-marker-alt mr-1"></i>
