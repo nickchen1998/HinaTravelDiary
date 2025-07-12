@@ -8,7 +8,7 @@ services:
     expose:
       - 8080
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
       - ${MEDIA_DIR:-./media}:/app/media
       - ${SQLITE_DB:-./db.sqlite3}:/app/db.sqlite3
