@@ -45,7 +45,7 @@ class JourneyAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('基本資訊', {
-            'fields': ('title', 'country', 'description')
+            'fields': ('title', 'country', 'city', 'description')
         }),
         ('日期', {
             'fields': ('start_date', 'end_date')

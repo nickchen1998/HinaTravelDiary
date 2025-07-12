@@ -1,13 +1,12 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ itinerary.title }} - 景點列表 - Hina 的旅行日記{% endblock %}
-
 {% block content %}
     <!-- 麵包屑導航 -->
     <div class="breadcrumbs text-sm mb-6">
         <ul>
             <li><a href="/">首頁</a></li>
             <li><a href="/journeys/{{ itinerary.journey.id }}/itineraries/">{{ itinerary.journey.title }}</a></li>
+            <li>行程列表</li>
             <li>{{ itinerary.title }}</li>
             <li>景點列表</li>
         </ul>

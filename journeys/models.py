@@ -33,6 +33,7 @@ class City(models.Model):
 # Create your models here.
 class Journey(models.Model):
     country = models.ForeignKey(Country, on_delete=models.CASCADE)
+    city = models.ForeignKey(City, on_delete=models.CASCADE, blank=True, null=True)
 
     title = models.CharField(max_length=200)
     description = models.TextField()

@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ journey.title }} - 行程列表 - Hina 的旅行日記{% endblock %}
-
 {% block content %}
     <!-- 麵包屑導航 -->
     <div class="breadcrumbs text-sm mb-6">
@@ -25,6 +23,10 @@
                     <div class="badge badge-primary badge-outline">
                         <i class="fas fa-map-marker-alt mr-1"></i>
                         {{ journey.country.name }}
+                    </div>
+                    <div class="badge badge-primary badge-outline">
+                        <i class="fas fa-map-marker-alt mr-1"></i>
+                        {{ journey.city.name }}
                     </div>
                     <div class="badge badge-secondary badge-outline">
                         <i class="fas fa-calendar mr-1"></i>

@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
 
-{% block title %}首頁 - Hina 的旅行日記{% endblock %}
-
 {% block content %}
     <!-- 主要內容區塊 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-screen">
@@ -84,6 +82,10 @@
                                                 <i class="fas fa-map-marker-alt mr-1"></i>
                                                 {{ journey.country.name }}
                                             </div>
+                                            <div class="badge badge-primary badge-outline">
+                                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                                {{ journey.city.name }}
+                                            </div>
                                             <div class="text-xs text-base-content opacity-60">
                                                 <i class="fas fa-calendar mr-1"></i>
                                                 {{ journey.created_at|date:"Y年m月d日" }}
@@ -93,7 +95,7 @@
                                         <p class="text-sm leading-relaxed">{{ journey.description|truncatewords:20 }}</p>
                                         <div class="card-actions justify-end mt-4">
                                             <a href="/journeys/{{ journey.id }}/itineraries"
-                                               class="btn btn-primary btn-sm">探索更多</a>
+                                               class="btn btn-primary btn-sm">瞭解更多</a>
                                         </div>
                                     </div>
                                 </div>
