@@ -4,7 +4,7 @@ services:
   django:
     build: .
     container_name: hina-travel-diary-django
-    command: sh -c "python manage.py collectstatic --noinput && gunicorn RAGPilot.wsgi:application --bind 0.0.0.0:8080 --workers 3"
+    command: sh -c "python manage.py collectstatic --noinput && gunicorn HinaTravelDiary.wsgi:application --bind 0.0.0.0:8080 --workers 3"
     expose:
       - 8080
     ports:
