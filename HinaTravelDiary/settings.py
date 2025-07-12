@@ -34,6 +34,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://hina-travel-diary.herokuapp.com",
     "http://127.0.0.1:8000",
     "http://localhost:8000",
+    "https://bat-stable-lamb.ngrok-free.app"
 ]
 
 
