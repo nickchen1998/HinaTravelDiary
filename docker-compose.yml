@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  django:
+    build: .
+    container_name: django
+    command: sh -c "python manage.py collectstatic --noinput && gunicorn RAGPilot.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    expose:
+      - 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ${MEDIA_DIR:-./media}:/app/media
+      - ${SQLITE_DB:-./db.sqlite3}:/app/db.sqlite3
+    working_dir: /app
+    restart: unless-stopped
