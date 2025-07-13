@@ -170,13 +170,13 @@ class ItineraryAdmin(admin.ModelAdmin):
 
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
-    list_display = ['itinerary', 'name', 'address', 'order']
+    list_display = ['itinerary', 'name', 'address', 'order', 'arrived_hour', 'arrived_minute']
     list_filter = ['itinerary__journey__title',]
     search_fields = ['itinerary__title', ]
     ordering = ['itinerary', 'order']
     inlines = [LocationPhotoInline]
     list_per_page = 20
-    list_editable = ['order']
+    list_editable = ['order', 'arrived_hour', 'arrived_minute']
 
     search_help_text = "請輸入行程名稱並搭配右側的旅程名稱來進行過濾。"
 
@@ -184,6 +184,10 @@ class LocationAdmin(admin.ModelAdmin):
         ('基本資訊', {
             'fields': ('itinerary', 'name', 'description', 'google_maps_url', 'order'),
             'description': '📝 輸入地點名稱和描述<br/>🔗 Google Maps 網址在建立後無法修改'
+        }),
+        ('時間資訊', {
+            'fields': ('arrived_hour', 'arrived_minute'),
+            'description': '⏰ 到達時間（小時和分鐘）'
         }),
         ('自動填入資訊', {
             'fields': ('address', 'latitude', 'longitude', 'rating', 'place_types'),

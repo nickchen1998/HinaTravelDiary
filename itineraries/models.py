@@ -53,6 +53,8 @@ class Location(models.Model):
     longitude = models.FloatField(blank=True, null=True, help_text="經度")
     rating = models.FloatField(blank=True, null=True, help_text="評分")
     place_types = models.CharField(max_length=200, blank=True, null=True, help_text="地點類型")
+    arrived_hour = models.IntegerField(blank=True, null=True, help_text="到達小時 (0-23)")
+    arrived_minute = models.IntegerField(blank=True, null=True, help_text="到達分鐘 (0-59)")
     order = models.PositiveIntegerField(default=0, help_text="在行程中的順序")
     created_at = models.DateTimeField(auto_now_add=True)
 
