@@ -196,15 +196,15 @@ class LocationAdmin(admin.ModelAdmin):
         }),
     )
 
-    def get_readonly_fields(self, request, obj=None):
-        """根據是否為新增物件來決定唯讀欄位"""
-        readonly = ['address', 'latitude', 'longitude', 'rating', 'place_types']
-        
-        # 如果是編輯現有物件（obj 存在），則將 google_maps_url 設為唯讀
-        if obj:
-            readonly.append('google_maps_url')
-        
-        return readonly
+    # def get_readonly_fields(self, request, obj=None):
+    #     """根據是否為新增物件來決定唯讀欄位"""
+    #     readonly = ['address', 'latitude', 'longitude', 'rating', 'place_types']
+    #
+    #     # 如果是編輯現有物件（obj 存在），則將 google_maps_url 設為唯讀
+    #     if obj:
+    #         readonly.append('google_maps_url')
+    #
+    #     return readonly
 
     def save_model(self, request, obj, form, change):
         """
