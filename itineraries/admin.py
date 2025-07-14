@@ -79,7 +79,7 @@ class LocationPhotoInline(admin.TabularInline):
 class LocationInline(admin.TabularInline):
     model = Location
     extra = 1
-    fields = ['name', 'google_maps_url', 'order']
+    fields = ['name', 'google_maps_url']
     ordering = ['order']
     can_delete = True
 
@@ -116,21 +116,31 @@ class ItineraryAdmin(admin.ModelAdmin):
 
     def save_formset(self, request, form, formset, change):
         """
-        處理 Inline formset 的儲存，包括地點的 Google Maps URL 更新和刪除操作
+        處理 Inline formset 的儲存，包括地點的 Google Maps URL 更新、刪除操作和自動排序
         """
         # 檢查是否為 LocationInline 的 formset
         if formset.model == Location:
             # 處理刪除的物件
-            if hasattr(formset, 'deleted_objects'):
-                for obj in formset.deleted_objects:
-                    messages.info(request, f"🗑️ 已刪除地點「{obj.name}」")
+            for form_instance in formset.deleted_forms:
+                if form_instance.instance.pk:
+                    messages.info(request, f"🗑️ 已刪除地點「{form_instance.instance.name}」")
 
             # 儲存新增和修改的物件
             instances = formset.save(commit=False)
 
+            # 先處理刪除
+            for obj in formset.deleted_objects:
+                obj.delete()
+
+            # 自動分配順序號（從1開始）
+            order = 1
             for instance in instances:
                 # 檢查是否為新增的物件（沒有 pk）
                 is_new = instance.pk is None
+
+                # 設定自動排序
+                instance.order = order
+                order += 1
 
                 # 先儲存實例
                 instance.save()
@@ -142,12 +152,12 @@ class ItineraryAdmin(admin.ModelAdmin):
                         if success:
                             messages.success(
                                 request,
-                                f"✅ 成功新增地點「{instance.name}」並從 Google Maps 獲取詳細資訊！"
+                                f"✅ 成功新增地點「{instance.name}」（順序 {instance.order}）並從 Google Maps 獲取詳細資訊！"
                             )
                         else:
                             messages.info(
                                 request,
-                                f"ℹ️ 已新增地點「{instance.name}」，但無法從 Google Maps 獲取額外資訊。"
+                                f"ℹ️ 已新增地點「{instance.name}」（順序 {instance.order}），但無法從 Google Maps 獲取額外資訊。"
                             )
                     except Exception as e:
                         messages.warning(
@@ -156,12 +166,12 @@ class ItineraryAdmin(admin.ModelAdmin):
                         )
                 elif is_new:
                     # 新增的地點但沒有 Google Maps URL
-                    messages.success(request, f"✅ 成功新增地點「{instance.name}」")
+                    messages.success(request, f"✅ 成功新增地點「{instance.name}」（順序 {instance.order}）")
                 else:
                     # 修改現有地點（不觸發 Google Maps 更新）
-                    messages.success(request, f"✅ 成功更新地點「{instance.name}」")
+                    messages.success(request, f"✅ 成功更新地點「{instance.name}」（順序 {instance.order}）")
 
-            # 儲存多對多關係和執行實際刪除
+            # 儲存多對多關係
             formset.save_m2m()
         else:
             # 其他 formset 使用預設處理
@@ -196,20 +206,7 @@ class LocationAdmin(admin.ModelAdmin):
         }),
     )
 
-    # def get_readonly_fields(self, request, obj=None):
-    #     """根據是否為新增物件來決定唯讀欄位"""
-    #     readonly = ['address', 'latitude', 'longitude', 'rating', 'place_types']
-    #
-    #     # 如果是編輯現有物件（obj 存在），則將 google_maps_url 設為唯讀
-    #     if obj:
-    #         readonly.append('google_maps_url')
-    #
-    #     return readonly
-
     def save_model(self, request, obj, form, change):
-        """
-        覆寫 save_model 方法來處理 Google Maps URL 更新
-        """
         # 先儲存基本資料
         super().save_model(request, obj, form, change)
 
