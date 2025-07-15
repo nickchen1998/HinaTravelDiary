@@ -120,15 +120,15 @@ class ItineraryAdmin(admin.ModelAdmin):
         """
         # 檢查是否為 LocationInline 的 formset
         if formset.model == Location:
-            # 儲存前先處理刪除
-            instances = formset.save(commit=False)
-            
-            # 處理刪除的物件並顯示訊息
+            # 先處理刪除的物件
             for obj in formset.deleted_objects:
                 messages.info(request, f"🗑️ 已刪除地點「{obj.name}」")
                 obj.delete()
 
-            # 取得行程並重新排序所有地點
+            # 儲存新增和修改的物件
+            instances = formset.save(commit=False)
+            
+            # 取得行程
             itinerary = form.instance
             
             # 先儲存所有新增和修改的物件
@@ -160,11 +160,12 @@ class ItineraryAdmin(admin.ModelAdmin):
                 else:
                     messages.success(request, f"✅ 成功更新地點「{instance.name}」")
             
-            # 重新排序所有地點
+            # 重新排序所有剩餘的地點
             all_locations = Location.objects.filter(itinerary=itinerary).order_by('order')
             for i, location in enumerate(all_locations, 1):
-                location.order = i
-                location.save(update_fields=['order'])
+                if location.order != i:
+                    location.order = i
+                    location.save(update_fields=['order'])
 
             # 儲存多對多關係
             formset.save_m2m()
