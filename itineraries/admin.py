@@ -120,31 +120,22 @@ class ItineraryAdmin(admin.ModelAdmin):
         """
         # 檢查是否為 LocationInline 的 formset
         if formset.model == Location:
-            # 處理刪除的物件
-            for form_instance in formset.deleted_forms:
-                if form_instance.instance.pk:
-                    messages.info(request, f"🗑️ 已刪除地點「{form_instance.instance.name}」")
-
-            # 儲存新增和修改的物件
+            # 儲存前先處理刪除
             instances = formset.save(commit=False)
-
-            # 先處理刪除
+            
+            # 處理刪除的物件並顯示訊息
             for obj in formset.deleted_objects:
+                messages.info(request, f"🗑️ 已刪除地點「{obj.name}」")
                 obj.delete()
 
-            # 自動分配順序號（從1開始）
-            order = 1
+            # 取得行程並重新排序所有地點
+            itinerary = form.instance
+            
+            # 先儲存所有新增和修改的物件
             for instance in instances:
-                # 檢查是否為新增的物件（沒有 pk）
                 is_new = instance.pk is None
-
-                # 設定自動排序
-                instance.order = order
-                order += 1
-
-                # 先儲存實例
                 instance.save()
-
+                
                 # 只有新增的地點且有 Google Maps URL 才更新資訊
                 if is_new and instance.google_maps_url:
                     try:
@@ -152,12 +143,12 @@ class ItineraryAdmin(admin.ModelAdmin):
                         if success:
                             messages.success(
                                 request,
-                                f"✅ 成功新增地點「{instance.name}」（順序 {instance.order}）並從 Google Maps 獲取詳細資訊！"
+                                f"✅ 成功新增地點「{instance.name}」並從 Google Maps 獲取詳細資訊！"
                             )
                         else:
                             messages.info(
                                 request,
-                                f"ℹ️ 已新增地點「{instance.name}」（順序 {instance.order}），但無法從 Google Maps 獲取額外資訊。"
+                                f"ℹ️ 已新增地點「{instance.name}」，但無法從 Google Maps 獲取額外資訊。"
                             )
                     except Exception as e:
                         messages.warning(
@@ -165,11 +156,15 @@ class ItineraryAdmin(admin.ModelAdmin):
                             f"⚠️ 更新地點「{instance.name}」資訊時發生錯誤: {str(e)}"
                         )
                 elif is_new:
-                    # 新增的地點但沒有 Google Maps URL
-                    messages.success(request, f"✅ 成功新增地點「{instance.name}」（順序 {instance.order}）")
+                    messages.success(request, f"✅ 成功新增地點「{instance.name}」")
                 else:
-                    # 修改現有地點（不觸發 Google Maps 更新）
-                    messages.success(request, f"✅ 成功更新地點「{instance.name}」（順序 {instance.order}）")
+                    messages.success(request, f"✅ 成功更新地點「{instance.name}」")
+            
+            # 重新排序所有地點
+            all_locations = Location.objects.filter(itinerary=itinerary).order_by('order')
+            for i, location in enumerate(all_locations, 1):
+                location.order = i
+                location.save(update_fields=['order'])
 
             # 儲存多對多關係
             formset.save_m2m()
