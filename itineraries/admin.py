@@ -78,7 +78,7 @@ class LocationPhotoInline(admin.TabularInline):
 class LocationInline(admin.TabularInline):
     model = Location
     extra = 1
-    fields = ['name', 'address', 'google_maps_url']
+    fields = ['name', 'address', 'google_maps_url', 'created_at']
     ordering = ['order']
     can_delete = True
 
@@ -156,7 +156,7 @@ update_locations_order_by_created_at.short_description = "依建立時間重新�
 
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
-    list_display = ['itinerary', 'name', 'address', 'order', 'arrived_hour', 'arrived_minute']
+    list_display = ['itinerary', 'name', 'address', 'order', 'created_at', 'arrived_hour', 'arrived_minute']
     list_filter = ['itinerary__journey__title', ]
     search_fields = ['itinerary__title', ]
     ordering = ['itinerary', 'order']
