@@ -4,7 +4,6 @@ from django.contrib import messages
 from django import forms
 from django.core.exceptions import ValidationError
 from .models import Itinerary, ItineraryPhoto, Location, LocationPhoto
-from .utils import update_location_from_google_maps
 
 
 class ItineraryForm(forms.ModelForm):
@@ -130,39 +129,16 @@ class LocationAdmin(admin.ModelAdmin):
     fieldsets = (
         ('基本資訊', {
             'fields': ('itinerary', 'name', 'description', 'google_maps_url', 'order'),
-            'description': '📝 輸入地點名稱和描述<br/>🔗 Google Maps 網址在建立後無法修改'
+            'description': '📝 輸入地點名稱、描述和相關網址'
         }),
         ('時間資訊', {
             'fields': ('arrived_hour', 'arrived_minute'),
             'description': '⏰ 到達時間（小時和分鐘）'
         }),
-        ('自動填入資訊', {
+        ('地點資訊', {
             'fields': ('address', 'latitude', 'longitude', 'rating', 'place_types'),
-            'description': '🤖 這些欄位會在儲存時自動從 Google Maps 獲取',
+            'description': '📍 地點的詳細資訊（可手動輸入或由系統自動填入）',
             'classes': ('collapse',)
         }),
     )
 
-    def save_model(self, request, obj, form, change):
-        # 先儲存基本資料
-        super().save_model(request, obj, form, change)
-
-        # 只在新增時處理 Google Maps URL
-        if obj.google_maps_url and not change:
-            try:
-                success = update_location_from_google_maps(obj, obj.google_maps_url)
-                if success:
-                    messages.success(
-                        request,
-                        f"✅ 成功從 Google Maps 更新地點「{obj.name}」的資訊！"
-                    )
-                else:
-                    messages.info(
-                        request,
-                        f"ℹ️ 無法從 Google Maps URL 獲取額外資訊，但地點已儲存。"
-                    )
-            except Exception as e:
-                messages.warning(
-                    request,
-                    f"⚠️ 更新地點資訊時發生錯誤: {str(e)}，但地點已儲存。"
-                )

@@ -12,10 +12,10 @@ import time
 logger = logging.getLogger(__name__)
 
 
-class GoogleMapsParser:
+class LocationHandler:
     """
-    增強版 Google Maps URL 解析器
-    支援多種 Google Maps URL 格式並整合多個 Google API
+    地點處理器
+    整合 Google Maps URL 解析、地點資訊搜尋和地址編碼功能
     """
     
     def __init__(self):
@@ -453,6 +453,101 @@ class GoogleMapsParser:
         
         return translated
 
+    def search_location_info(self, location_name: str) -> Optional[Dict]:
+        """
+        根據地點名稱搜尋星等、景點類別等資訊
+        """
+        if not location_name:
+            return None
+        
+        try:
+            place_result = self.search_place_by_query(location_name)
+            if place_result:
+                return {
+                    'rating': place_result.get('rating'),
+                    'place_types': ', '.join(self._translate_place_types(place_result.get('types', []))),
+                    'address': place_result.get('formatted_address'),
+                    'latitude': place_result.get('geometry', {}).get('location', {}).get('lat'),
+                    'longitude': place_result.get('geometry', {}).get('location', {}).get('lng')
+                }
+        except Exception as e:
+            logger.error(f"搜尋地點資訊時發生錯誤: {e}")
+        
+        return None
+    
+    def update_location_by_address(self, address: str) -> Optional[Dict]:
+        """
+        根據地址更新地址、緯度和經度資訊
+        """
+        if not address:
+            return None
+        
+        try:
+            geocode_result = self.geocode_address(address)
+            if geocode_result:
+                lat, lng, formatted_address = geocode_result
+                return {
+                    'address': formatted_address,
+                    'latitude': lat,
+                    'longitude': lng
+                }
+        except Exception as e:
+            logger.error(f"地址編碼時發生錯誤: {e}")
+        
+        return None
+    
+    def update_location_info(self, location, search_by_name: bool = True, search_by_address: bool = True) -> bool:
+        """
+        更新地點資訊，包括搜尋名稱和地址編碼
+        """
+        updated = False
+        
+        try:
+            # 如果有地點名稱，搜尋相關資訊
+            if search_by_name and location.name:
+                location_info = self.search_location_info(location.name)
+                if location_info:
+                    # 只更新空白的欄位，避免覆蓋現有資料
+                    if not location.rating and location_info.get('rating'):
+                        location.rating = location_info['rating']
+                        updated = True
+                    
+                    if not location.place_types and location_info.get('place_types'):
+                        location.place_types = location_info['place_types']
+                        updated = True
+                    
+                    # 如果沒有地址資訊，使用搜尋結果的地址
+                    if not location.address and location_info.get('address'):
+                        location.address = location_info['address']
+                        updated = True
+                    
+                    if not location.latitude and location_info.get('latitude'):
+                        location.latitude = location_info['latitude']
+                        updated = True
+                    
+                    if not location.longitude and location_info.get('longitude'):
+                        location.longitude = location_info['longitude']
+                        updated = True
+            
+            # 如果有地址但沒有座標，進行地址編碼
+            if search_by_address and location.address and (not location.latitude or not location.longitude):
+                address_info = self.update_location_by_address(location.address)
+                if address_info:
+                    location.address = address_info['address']  # 使用格式化後的地址
+                    location.latitude = address_info['latitude']
+                    location.longitude = address_info['longitude']
+                    updated = True
+            
+            if updated:
+                location.save()
+                logger.info(f"成功更新地點資訊: {location.name}")
+            
+            return updated
+            
+        except Exception as e:
+            logger.error(f"更新地點資訊時發生錯誤: {e}")
+            return False
+
 
 def import_locations_from_google_maps(url: str) -> List[Dict]:
     """
@@ -462,10 +557,10 @@ def import_locations_from_google_maps(url: str) -> List[Dict]:
     if not url:
         return []
     
-    parser = GoogleMapsParser()
+    handler = LocationHandler()
     
     try:
-        locations = parser.parse_google_maps_url(url)
+        locations = handler.parse_google_maps_url(url)
         
         if not locations:
             # 如果無法解析，創建一個提示地點
@@ -500,12 +595,12 @@ def import_locations_from_multiple_urls(urls_text: str) -> List[Dict]:
     urls = [url.strip() for url in urls_text.strip().split('\n') if url.strip()]
     
     all_locations = []
-    parser = GoogleMapsParser()
+    handler = LocationHandler()
     
     for i, url in enumerate(urls):
         try:
             logger.info(f"正在處理第 {i+1}/{len(urls)} 個網址: {url}")
-            locations = parser.parse_google_maps_url(url)
+            locations = handler.parse_google_maps_url(url)
             
             if locations:
                 for location in locations:
@@ -541,10 +636,10 @@ def update_location_from_google_maps(location, url: str) -> bool:
     if not url:
         return False
     
-    parser = GoogleMapsParser()
+    handler = LocationHandler()
     
     try:
-        locations = parser.parse_google_maps_url(url)
+        locations = handler.parse_google_maps_url(url)
         
         if locations:
             location_data = locations[0]  # 取第一個結果
