@@ -8,38 +8,38 @@ from .models import Itinerary, ItineraryPhoto, Location, LocationPhoto
 
 class ItineraryForm(forms.ModelForm):
     """自定義行程表單，限制日期範圍"""
-    
+
     class Meta:
         model = Itinerary
         fields = '__all__'
-    
+
     def clean_start_date(self):
         start_date = self.cleaned_data.get('start_date')
         journey = self.cleaned_data.get('journey')
-        
+
         if start_date and journey:
             # 檢查日期是否在旅程起迄日範圍內
             if start_date < journey.start_date or start_date > journey.end_date:
                 raise ValidationError(
                     f'行程開始日期必須在旅程期間內 ({journey.start_date} 到 {journey.end_date})'
                 )
-            
+
             # 檢查該日期是否已經存在於該旅程的其他行程中
             existing_itineraries = Itinerary.objects.filter(
                 journey=journey,
                 start_date=start_date
             )
-            
+
             # 如果是編輯現有行程，排除自己
             if self.instance and self.instance.pk:
                 existing_itineraries = existing_itineraries.exclude(pk=self.instance.pk)
-            
+
             if existing_itineraries.exists():
                 existing_itinerary = existing_itineraries.first()
                 raise ValidationError(
                     f'該日期已被行程「{existing_itinerary.title}」使用，請選擇其他日期'
                 )
-        
+
         return start_date
 
 
@@ -91,7 +91,7 @@ class ItineraryAdmin(admin.ModelAdmin):
     ordering = ['start_date']
     inlines = [ItineraryPhotoInline, LocationInline]
     list_per_page = 20
-    readonly_fields = ['created_at',]
+    readonly_fields = ['created_at', ]
 
     fieldsets = (
         ('基本資訊', {
@@ -114,15 +114,56 @@ class ItineraryAdmin(admin.ModelAdmin):
     has_photo.short_description = '有照片'
 
 
+def update_locations_order_by_created_at(modeladmin, request, queryset):
+    """
+    依照 created_at 欄位做 ASC 排序，並更新 order 欄位，從 1 開始
+    按照行程分組，每個行程內的地點重新排序
+    """
+    updated_count = 0
+    itineraries_processed = set()
+    
+    # 取得所有受影響的行程
+    affected_itineraries = set(queryset.values_list('itinerary', flat=True))
+    
+    for itinerary_id in affected_itineraries:
+        # 取得該行程的所有地點，按建立時間排序
+        locations = Location.objects.filter(
+            itinerary_id=itinerary_id
+        ).order_by('created_at')
+        
+        # 重新分配順序號
+        for index, location in enumerate(locations, 1):
+            if location.order != index:
+                Location.objects.filter(pk=location.pk).update(order=index)
+                updated_count += 1
+        
+        itineraries_processed.add(itinerary_id)
+    
+    # 顯示結果訊息
+    if updated_count > 0:
+        messages.success(
+            request,
+            f"✅ 成功更新 {updated_count} 個地點的順序，共處理 {len(itineraries_processed)} 個行程"
+        )
+    else:
+        messages.info(
+            request,
+            "ℹ️ 所有地點的順序已經是正確的，無需更新"
+        )
+
+update_locations_order_by_created_at.short_description = "依建立時間重新排序地點"
+
+
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     list_display = ['itinerary', 'name', 'address', 'order', 'arrived_hour', 'arrived_minute']
-    list_filter = ['itinerary__journey__title',]
+    list_filter = ['itinerary__journey__title', ]
     search_fields = ['itinerary__title', ]
     ordering = ['itinerary', 'order']
     inlines = [LocationPhotoInline]
     list_per_page = 20
     list_editable = ['order', 'arrived_hour', 'arrived_minute']
+    actions = [update_locations_order_by_created_at,]
 
     search_help_text = "請輸入行程名稱並搭配右側的旅程名稱來進行過濾。"
 
@@ -141,4 +182,3 @@ class LocationAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-
