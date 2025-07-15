@@ -114,64 +114,64 @@ class ItineraryAdmin(admin.ModelAdmin):
     has_photo.boolean = True
     has_photo.short_description = '有照片'
 
-    def save_formset(self, request, form, formset, change):
-        """
-        處理 Inline formset 的儲存，包括地點的 Google Maps URL 更新、刪除操作和自動排序
-        """
-        # 檢查是否為 LocationInline 的 formset
-        if formset.model == Location:
-            # 先處理刪除的物件
-            for obj in formset.deleted_objects:
-                messages.info(request, f"🗑️ 已刪除地點「{obj.name}」")
-                obj.delete()
-
-            # 儲存新增和修改的物件
-            instances = formset.save(commit=False)
-            
-            # 取得行程
-            itinerary = form.instance
-            
-            # 先儲存所有新增和修改的物件
-            for instance in instances:
-                is_new = instance.pk is None
-                instance.save()
-                
-                # 只有新增的地點且有 Google Maps URL 才更新資訊
-                if is_new and instance.google_maps_url:
-                    try:
-                        success = update_location_from_google_maps(instance, instance.google_maps_url)
-                        if success:
-                            messages.success(
-                                request,
-                                f"✅ 成功新增地點「{instance.name}」並從 Google Maps 獲取詳細資訊！"
-                            )
-                        else:
-                            messages.info(
-                                request,
-                                f"ℹ️ 已新增地點「{instance.name}」，但無法從 Google Maps 獲取額外資訊。"
-                            )
-                    except Exception as e:
-                        messages.warning(
-                            request,
-                            f"⚠️ 更新地點「{instance.name}」資訊時發生錯誤: {str(e)}"
-                        )
-                elif is_new:
-                    messages.success(request, f"✅ 成功新增地點「{instance.name}」")
-                else:
-                    messages.success(request, f"✅ 成功更新地點「{instance.name}」")
-            
-            # 重新排序所有剩餘的地點
-            all_locations = Location.objects.filter(itinerary=itinerary).order_by('order')
-            for i, location in enumerate(all_locations, 1):
-                if location.order != i:
-                    location.order = i
-                    location.save(update_fields=['order'])
-
-            # 儲存多對多關係
-            formset.save_m2m()
-        else:
-            # 其他 formset 使用預設處理
-            super().save_formset(request, form, formset, change)
+    # def save_formset(self, request, form, formset, change):
+    #     """
+    #     處理 Inline formset 的儲存，包括地點的 Google Maps URL 更新、刪除操作和自動排序
+    #     """
+    #     # 檢查是否為 LocationInline 的 formset
+    #     if formset.model == Location:
+    #         # 先處理刪除的物件
+    #         for obj in formset.deleted_objects:
+    #             messages.info(request, f"🗑️ 已刪除地點「{obj.name}」")
+    #             obj.delete()
+    #
+    #         # 儲存新增和修改的物件
+    #         instances = formset.save(commit=False)
+    #
+    #         # 取得行程
+    #         itinerary = form.instance
+    #
+    #         # 先儲存所有新增和修改的物件
+    #         for instance in instances:
+    #             is_new = instance.pk is None
+    #             instance.save()
+    #
+    #             # 只有新增的地點且有 Google Maps URL 才更新資訊
+    #             if is_new and instance.google_maps_url:
+    #                 try:
+    #                     success = update_location_from_google_maps(instance, instance.google_maps_url)
+    #                     if success:
+    #                         messages.success(
+    #                             request,
+    #                             f"✅ 成功新增地點「{instance.name}」並從 Google Maps 獲取詳細資訊！"
+    #                         )
+    #                     else:
+    #                         messages.info(
+    #                             request,
+    #                             f"ℹ️ 已新增地點「{instance.name}」，但無法從 Google Maps 獲取額外資訊。"
+    #                         )
+    #                 except Exception as e:
+    #                     messages.warning(
+    #                         request,
+    #                         f"⚠️ 更新地點「{instance.name}」資訊時發生錯誤: {str(e)}"
+    #                     )
+    #             elif is_new:
+    #                 messages.success(request, f"✅ 成功新增地點「{instance.name}」")
+    #             else:
+    #                 messages.success(request, f"✅ 成功更新地點「{instance.name}」")
+    #
+    #         # 重新排序所有剩餘的地點
+    #         all_locations = Location.objects.filter(itinerary=itinerary).order_by('order')
+    #         for i, location in enumerate(all_locations, 1):
+    #             if location.order != i:
+    #                 location.order = i
+    #                 location.save(update_fields=['order'])
+    #
+    #         # 儲存多對多關係
+    #         formset.save_m2m()
+    #     else:
+    #         # 其他 formset 使用預設處理
+    #         super().save_formset(request, form, formset, change)
 
 
 @admin.register(Location)
