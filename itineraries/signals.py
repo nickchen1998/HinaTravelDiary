@@ -24,6 +24,11 @@ def update_location_info_on_save(sender, instance, created, **kwargs):
     # 避免無限遞迴，如果是透過 update 觸發的就不處理
     if hasattr(instance, '_updating_from_signal'):
         return
+
+    if created and not instance.order:
+        Location.objects.filter(pk=instance.pk).update(**{
+            "order": instance.itinerary.location_set.count() + 1,
+        })
     
     try:
         handler = LocationHandler()
