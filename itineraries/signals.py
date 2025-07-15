@@ -27,7 +27,7 @@ def update_location_info_on_save(sender, instance, created, **kwargs):
 
     if created and not instance.order:
         Location.objects.filter(pk=instance.pk).update(**{
-            "order": instance.itinerary.location_set.count() + 1,
+            "order": instance.itinerary.location_set.count(),
         })
     
     try:
