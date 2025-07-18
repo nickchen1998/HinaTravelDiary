@@ -33,11 +33,7 @@
                 <div class="flex justify-center items-center gap-4 text-sm">
                     <div class="badge badge-secondary badge-outline">
                         <i class="fas fa-calendar mr-1"></i>
-                        {{ journey.start_date|date:"Y年m月d日" }} ～
-                    </div>
-                    <div class="badge badge-secondary badge-outline">
-                        <i class="fas fa-calendar mr-1"></i>
-                        {{ journey.end_date|date:"Y年m月d日" }}
+                        {{ journey.start_date|date:"Y年m月d日" }} ～ {{ journey.end_date|date:"Y年m月d日" }}
                     </div>
                 </div>
             </div>
