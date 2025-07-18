@@ -4,7 +4,7 @@ services:
   django:
     build: .
     container_name: hina-travel-diary-django
-    command: sh -c "python manage.py collectstatic --noinput && gunicorn HinaTravelDiary.wsgi:application --bind 0.0.0.0:8080 --workers 3"
+    command: sh -c "python manage.py collectstatic --noinput && gunicorn HinaTravelDiary.wsgi:application --bind 0.0.0.0:8080 --workers 3 --reload"
     expose:
       - 8080
     ports:
@@ -13,6 +13,7 @@ services:
       - ${MEDIA_DIR:-./media}:/app/media
       - ${SQLITE_DB:-./db.sqlite3}:/app/db.sqlite3
       - ./staticfiles:/app/staticfiles
+      - .:/app
     working_dir: /app
     restart: unless-stopped
 
