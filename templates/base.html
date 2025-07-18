@@ -25,13 +25,28 @@
             旅行日記 Travel Diary
         </a>
     </div>
-    <div class="flex-none">
+    <!-- 桌面版選單 -->
+    <div class="flex-none hidden lg:flex">
         <ul class="menu menu-horizontal px-1">
             <li><a href="/">首頁</a></li>
             {% for country in highlighted_countries %}
                 <li><a href="/countries/{{ country.id }}/journeys/">{{ country.name }}</a></li>
             {% endfor %}
         </ul>
+    </div>
+    <!-- 手機版漢堡選單 -->
+    <div class="flex-none lg:hidden">
+        <div class="dropdown dropdown-end">
+            <div tabindex="0" role="button" class="btn btn-ghost">
+                <i class="fas fa-bars"></i>
+            </div>
+            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                <li><a href="/">首頁</a></li>
+                {% for country in highlighted_countries %}
+                    <li><a href="/countries/{{ country.id }}/journeys/">{{ country.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 </div>
 
