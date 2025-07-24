@@ -34,20 +34,40 @@ def create_journey(request, country_id):
         description = request.POST.get('description')
         start_date = request.POST.get('start_date')
         end_date = request.POST.get('end_date')
-        city_id = request.POST.get('city')
+        city_name = request.POST.get('city_name')
+        city_english_name = request.POST.get('city_english_name')
         image = request.FILES.get('image')
         
         # 驗證必填字段
         if not all([title, description, start_date, end_date]):
             return JsonResponse({'error': '請填寫所有必填字段'}, status=400)
         
-        # 獲取城市（如果有選擇）
+        # 處理城市（如果有提供城市名稱）
         city = None
-        if city_id:
-            try:
-                city = City.objects.get(id=city_id, country=country)
-            except City.DoesNotExist:
-                return JsonResponse({'error': '所選城市不存在'}, status=400)
+        if city_name and city_name.strip():
+            # 檢查城市是否已存在（比對中文或英文名稱）
+            from django.db.models import Q
+            
+            # 建立查詢條件
+            q_filter = Q(country=country)
+            names_to_check = [city_name.strip()]
+            if city_english_name and city_english_name.strip():
+                names_to_check.append(city_english_name.strip())
+            
+            # 檢查所有提供的名稱是否符合現有城市的中文或英文名稱
+            name_conditions = Q()
+            for name in names_to_check:
+                name_conditions |= Q(name=name) | Q(english_name=name)
+            
+            city = City.objects.filter(q_filter & name_conditions).first()
+            
+            if not city:
+                # 如果城市不存在，創建新的城市
+                city = City.objects.create(
+                    country=country,
+                    name=city_name.strip(),
+                    english_name=city_english_name.strip() if city_english_name else city_name.strip()
+                )
         
         # 建立旅程
         journey = Journey.objects.create(
@@ -90,20 +110,40 @@ def edit_journey(request, country_id, journey_id):
         description = request.POST.get('description')
         start_date = request.POST.get('start_date')
         end_date = request.POST.get('end_date')
-        city_id = request.POST.get('city')
+        city_name = request.POST.get('city_name')
+        city_english_name = request.POST.get('city_english_name')
         image = request.FILES.get('image')
         
         # 驗證必填字段
         if not all([title, description, start_date, end_date]):
             return JsonResponse({'error': '請填寫所有必填字段'}, status=400)
         
-        # 獲取城市（如果有選擇）
+        # 處理城市（如果有提供城市名稱）
         city = None
-        if city_id:
-            try:
-                city = City.objects.get(id=city_id, country=country)
-            except City.DoesNotExist:
-                return JsonResponse({'error': '所選城市不存在'}, status=400)
+        if city_name and city_name.strip():
+            # 檢查城市是否已存在（比對中文或英文名稱）
+            from django.db.models import Q
+            
+            # 建立查詢條件
+            q_filter = Q(country=country)
+            names_to_check = [city_name.strip()]
+            if city_english_name and city_english_name.strip():
+                names_to_check.append(city_english_name.strip())
+            
+            # 檢查所有提供的名稱是否符合現有城市的中文或英文名稱
+            name_conditions = Q()
+            for name in names_to_check:
+                name_conditions |= Q(name=name) | Q(english_name=name)
+            
+            city = City.objects.filter(q_filter & name_conditions).first()
+            
+            if not city:
+                # 如果城市不存在，創建新的城市
+                city = City.objects.create(
+                    country=country,
+                    name=city_name.strip(),
+                    english_name=city_english_name.strip() if city_english_name else city_name.strip()
+                )
         
         # 更新旅程
         journey.title = title

@@ -103,7 +103,8 @@
                                                 {{ location.address|truncatechars:50 }}
                                             </div>
                                         {% endif %}
-
+                                    </div>
+                                <div class="flex flex-wrap items-center gap-4 mb-4">
                                         {% if location.rating %}
                                             <div class="badge badge-warning badge-outline">
                                                 <i class="fas fa-star mr-1"></i>
@@ -118,6 +119,8 @@
                                             </div>
                                         {% endif %}
 
+                                    </div>
+                                <div class="flex flex-wrap items-center gap-4 mb-4">
                                         {% if location.google_maps_url %}
                                             <a href="{{ location.google_maps_url }}"
                                                target="_blank"
