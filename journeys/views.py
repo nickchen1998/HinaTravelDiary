@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.db.models import Q
 from datetime import timedelta
 from .models import Country, City, Journey, JourneyPhoto
 from itineraries.models import Itinerary
@@ -46,8 +47,6 @@ def create_journey(request, country_id):
         city = None
         if city_name and city_name.strip():
             # 檢查城市是否已存在（比對中文或英文名稱）
-            from django.db.models import Q
-            
             # 建立查詢條件
             q_filter = Q(country=country)
             names_to_check = [city_name.strip()]
@@ -87,11 +86,15 @@ def create_journey(request, country_id):
             )
         
         # 自動建立行程
-        create_itineraries_for_journey(journey)
+        try:
+            itinerary_count = create_itineraries_for_journey(journey)
+            message = f'旅程「{journey.title}」建立成功！已自動建立 {itinerary_count} 天行程。'
+        except Exception as e:
+            message = f'旅程「{journey.title}」建立成功！但建立行程時發生錯誤：{str(e)}'
         
         return JsonResponse({
             'success': True,
-            'message': f'旅程「{journey.title}」建立成功！'
+            'message': message
         })
         
     except Exception as e:
@@ -122,8 +125,6 @@ def edit_journey(request, country_id, journey_id):
         city = None
         if city_name and city_name.strip():
             # 檢查城市是否已存在（比對中文或英文名稱）
-            from django.db.models import Q
-            
             # 建立查詢條件
             q_filter = Q(country=country)
             names_to_check = [city_name.strip()]
@@ -176,11 +177,24 @@ def edit_journey(request, country_id, journey_id):
 
 def create_itineraries_for_journey(journey):
     """為旅程自動建立每日行程"""
-    current_date = journey.start_date
+    from datetime import datetime
+    
+    # 確保日期是 datetime.date 物件
+    if isinstance(journey.start_date, str):
+        start_date = datetime.strptime(journey.start_date, '%Y-%m-%d').date()
+    else:
+        start_date = journey.start_date
+        
+    if isinstance(journey.end_date, str):
+        end_date = datetime.strptime(journey.end_date, '%Y-%m-%d').date()
+    else:
+        end_date = journey.end_date
+    
+    current_date = start_date
     day_count = 1
     created_count = 0
     
-    while current_date <= journey.end_date:
+    while current_date <= end_date:
         # 格式化日期為 YYYY.MM.DD
         date_str = current_date.strftime('%Y.%m.%d')
         title = f"Day-{day_count:02d}-{date_str}"
