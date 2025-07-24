@@ -30,10 +30,7 @@
                         <i class="fas fa-map mr-1"></i>
                         {{ country.country_code }}
                     </div>
-                    <div class="badge badge-accent badge-outline">
-                        <i class="fas fa-route mr-1"></i>
-                        {{ journeys|length }} 個旅程
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -50,6 +47,14 @@
             <p class="text-lg text-base-content opacity-70">
                 {{ country.name }} 的所有旅程
             </p>
+            
+            <!-- 建立新旅程按鈕 -->
+            <div class="mt-6">
+                <button onclick="openCreateJourneyModal()" class="btn btn-primary">
+                    <i class="fas fa-plus mr-2"></i>
+                    建立新旅程
+                </button>
+            </div>
         </div>
 
         {% if journeys %}
@@ -98,6 +103,11 @@
                             
                             <!-- 操作按鈕 -->
                             <div class="card-actions justify-end">
+                                <button onclick="openEditJourneyModal({{ journey.id }}, '{{ journey.title }}', '{{ journey.description|escapejs }}', '{{ journey.start_date|date:'Y-m-d' }}', '{{ journey.end_date|date:'Y-m-d' }}', '{% if journey.journeyphoto %}{{ journey.journeyphoto.image.url }}{% endif %}', '{% if journey.city %}{{ journey.city.id }}{% endif %}')" 
+                                        class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-edit mr-1"></i>
+                                    編輯
+                                </button>
                                 <a href="/journeys/{{ journey.id }}/itineraries/" 
                                    class="btn btn-primary btn-sm">
                                     <i class="fas fa-eye mr-1"></i>
@@ -134,5 +144,282 @@
             </a>
         </div>
     {% endif %}
+
+    <!-- 建立旅程模態對話框 -->
+    <div id="createJourneyModal" class="modal">
+        <div class="modal-box w-11/12 max-w-2xl">
+            <form id="createJourneyForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <h3 class="font-bold text-lg mb-4">
+                    <i class="fas fa-plus text-primary mr-2"></i>
+                    建立新旅程
+                </h3>
+                
+                <!-- 國家資訊顯示 -->
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">國家</span>
+                    </label>
+                    <div class="input input-bordered w-full bg-base-200 flex items-center">
+                        <i class="fas fa-flag mr-2 text-primary"></i>
+                        <span>{{ country.name }} ({{ country.english_name }})</span>
+                    </div>
+                </div>
+                
+                <!-- 城市選擇 -->
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">城市 <span class="text-gray-500">(可選)</span></span>
+                    </label>
+                    <select name="city" class="select select-bordered w-full">
+                        <option value="">請選擇城市（可不選）</option>
+                        {% for city in country.cities.all %}
+                            <option value="{{ city.id }}">{{ city.name }} ({{ city.english_name }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">旅程標題</span>
+                    </label>
+                    <input type="text" name="title" placeholder="請輸入旅程標題" class="input input-bordered w-full" required>
+                </div>
+                
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">旅程描述</span>
+                    </label>
+                    <textarea name="description" class="textarea textarea-bordered" placeholder="請輸入旅程描述" rows="3" required></textarea>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">出發日期</span>
+                        </label>
+                        <input type="date" name="start_date" class="input input-bordered" required>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">結束日期</span>
+                        </label>
+                        <input type="date" name="end_date" class="input input-bordered" required>
+                    </div>
+                </div>
+                
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">旅程圖片</span>
+                    </label>
+                    <input type="file" name="image" class="file-input file-input-bordered w-full" accept="image/*">
+                </div>
+                
+                <input type="hidden" name="country_id" value="{{ country.id }}">
+                
+                <div class="modal-action">
+                    <button type="button" class="btn" onclick="closeCreateJourneyModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">建立旅程</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 編輯旅程模態對話框 -->
+    <div id="editJourneyModal" class="modal">
+        <div class="modal-box w-11/12 max-w-2xl">
+            <form id="editJourneyForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="_method" value="PUT">
+                <input type="hidden" id="editJourneyId" name="journey_id">
+                
+                <h3 class="font-bold text-lg mb-4">
+                    <i class="fas fa-edit text-secondary mr-2"></i>
+                    編輯旅程
+                </h3>
+                
+                <!-- 國家資訊顯示 -->
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">國家</span>
+                    </label>
+                    <div class="input input-bordered w-full bg-base-200 flex items-center">
+                        <i class="fas fa-flag mr-2 text-primary"></i>
+                        <span>{{ country.name }} ({{ country.english_name }})</span>
+                    </div>
+                </div>
+                
+                <!-- 城市選擇 -->
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">城市 <span class="text-gray-500">(可選)</span></span>
+                    </label>
+                    <select id="editCity" name="city" class="select select-bordered w-full">
+                        <option value="">請選擇城市（可不選）</option>
+                        {% for city in country.cities.all %}
+                            <option value="{{ city.id }}">{{ city.name }} ({{ city.english_name }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">旅程標題</span>
+                    </label>
+                    <input type="text" id="editTitle" name="title" placeholder="請輸入旅程標題" class="input input-bordered w-full" required>
+                </div>
+                
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">旅程描述</span>
+                    </label>
+                    <textarea id="editDescription" name="description" class="textarea textarea-bordered" placeholder="請輸入旅程描述" rows="3" required></textarea>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">出發日期</span>
+                        </label>
+                        <input type="date" id="editStartDate" name="start_date" class="input input-bordered" required>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">結束日期</span>
+                        </label>
+                        <input type="date" id="editEndDate" name="end_date" class="input input-bordered" required>
+                    </div>
+                </div>
+                
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">旅程圖片</span>
+                    </label>
+                    <input type="file" name="image" class="file-input file-input-bordered w-full" accept="image/*">
+                    <div id="currentImagePreview" class="mt-2"></div>
+                </div>
+                
+                <input type="hidden" name="country_id" value="{{ country.id }}">
+                
+                <div class="modal-action">
+                    <button type="button" class="btn" onclick="closeEditJourneyModal()">取消</button>
+                    <button type="submit" class="btn btn-secondary">更新旅程</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openCreateJourneyModal() {
+            document.getElementById('createJourneyModal').classList.add('modal-open');
+        }
+        
+        function closeCreateJourneyModal() {
+            document.getElementById('createJourneyModal').classList.remove('modal-open');
+            document.getElementById('createJourneyForm').reset();
+        }
+        
+        function openEditJourneyModal(journeyId, title, description, startDate, endDate, imageUrl, cityId) {
+            document.getElementById('editJourneyId').value = journeyId;
+            document.getElementById('editTitle').value = title;
+            document.getElementById('editDescription').value = description;
+            document.getElementById('editStartDate').value = startDate;
+            document.getElementById('editEndDate').value = endDate;
+            
+            // 設置城市選擇
+            const citySelect = document.getElementById('editCity');
+            if (cityId) {
+                citySelect.value = cityId;
+            } else {
+                citySelect.value = '';
+            }
+            
+            const imagePreview = document.getElementById('currentImagePreview');
+            if (imageUrl) {
+                imagePreview.innerHTML = `
+                    <div class="text-sm text-gray-600 mb-2">目前圖片：</div>
+                    <img src="${imageUrl}" alt="目前旅程圖片" class="w-32 h-32 object-cover rounded-lg border">
+                `;
+            } else {
+                imagePreview.innerHTML = '<div class="text-sm text-gray-600">尚未上傳圖片</div>';
+            }
+            
+            // 設定表單 action
+            const form = document.getElementById('editJourneyForm');
+            form.action = `/countries/{{ country.id }}/journeys/${journeyId}/edit/`;
+            
+            document.getElementById('editJourneyModal').classList.add('modal-open');
+        }
+        
+        function closeEditJourneyModal() {
+            document.getElementById('editJourneyModal').classList.remove('modal-open');
+            document.getElementById('editJourneyForm').reset();
+            document.getElementById('currentImagePreview').innerHTML = '';
+            document.getElementById('editCity').value = '';
+        }
+        
+        // 表單提交處理
+        document.getElementById('createJourneyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch(`/countries/{{ country.id }}/journeys/create/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('建立旅程時發生錯誤，請稍後再試。');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('建立旅程時發生錯誤，請稍後再試。');
+            });
+        });
+        
+        document.getElementById('editJourneyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const journeyId = document.getElementById('editJourneyId').value;
+            
+            fetch(`/countries/{{ country.id }}/journeys/${journeyId}/edit/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('更新旅程時發生錯誤，請稍後再試。');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('更新旅程時發生錯誤，請稍後再試。');
+            });
+        });
+        
+        // 點擊模態背景關閉
+        document.getElementById('createJourneyModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCreateJourneyModal();
+            }
+        });
+        
+        document.getElementById('editJourneyModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditJourneyModal();
+            }
+        });
+    </script>
 
 {% endblock %}
