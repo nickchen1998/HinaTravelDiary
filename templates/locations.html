@@ -66,6 +66,14 @@
             <p class="text-lg text-base-content opacity-70">
                 探索這個行程的所有精彩景點
             </p>
+            
+            <!-- 新增地點按鈕 -->
+            <div class="mt-6">
+                <button onclick="openCreateLocationModal()" class="btn btn-primary">
+                    <i class="fas fa-plus mr-2"></i>
+                    新增地點
+                </button>
+            </div>
         </div>
 
         {% if locations %}
@@ -96,11 +104,11 @@
                                     {% endif %}
 
                                     <!-- 地點資訊 -->
-                                    <div class="flex flex-wrap items-center gap-4 mb-4">
+                                    <div class="mb-4">
                                         {% if location.address %}
-                                            <div class="badge badge-outline">
+                                            <div class="text-sm text-base-content opacity-70">
                                                 <i class="fas fa-map-marker-alt mr-1"></i>
-                                                {{ location.address|truncatechars:50 }}
+                                                <span class="break-words">{{ location.address }}</span>
                                             </div>
                                         {% endif %}
                                     </div>
@@ -128,6 +136,50 @@
                                                 <i class="fas fa-external-link-alt mr-1"></i>
                                                 在 Google Maps 查看
                                             </a>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- 時間資訊 -->
+                                    <div class="flex flex-wrap items-center gap-4 mb-4">
+                                        {% if location.arrived_hour is not None and location.arrived_minute is not None %}
+                                            <div class="badge badge-outline">
+                                                <i class="fas fa-clock mr-1"></i>
+                                                到達: {{ location.arrived_hour|stringformat:"02d" }}:{{ location.arrived_minute|stringformat:"02d" }}
+                                            </div>
+                                        {% endif %}
+                                        {% if location.departure_hour is not None and location.departure_minute is not None %}
+                                            <div class="badge badge-outline">
+                                                <i class="fas fa-clock mr-1"></i>
+                                                離開: {{ location.departure_hour|stringformat:"02d" }}:{{ location.departure_minute|stringformat:"02d" }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- 操作按鈕 -->
+                                    <div class="flex flex-wrap gap-2">
+                                        <button onclick="openEditLocationModal({{ location.id }}, '{{ location.name|escapejs }}', {{ location.arrived_hour|default:'null' }}, {{ location.arrived_minute|default:'null' }}, {{ location.departure_hour|default:'null' }}, {{ location.departure_minute|default:'null' }})" 
+                                                class="btn btn-sm btn-outline btn-secondary">
+                                            <i class="fas fa-edit mr-1"></i>
+                                            編輯
+                                        </button>
+                                        <button onclick="deleteLocation({{ location.id }})" 
+                                                class="btn btn-sm btn-outline btn-error">
+                                            <i class="fas fa-trash mr-1"></i>
+                                            刪除
+                                        </button>
+                                        {% if location.order > 1 %}
+                                            <button onclick="moveLocation({{ location.id }}, 'up')" 
+                                                    class="btn btn-sm btn-outline">
+                                                <i class="fas fa-arrow-up mr-1"></i>
+                                                上移
+                                            </button>
+                                        {% endif %}
+                                        {% if not forloop.last %}
+                                            <button onclick="moveLocation({{ location.id }}, 'down')" 
+                                                    class="btn btn-sm btn-outline">
+                                                <i class="fas fa-arrow-down mr-1"></i>
+                                                下移
+                                            </button>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -387,4 +439,309 @@
             });
         </script>
     {% endif %}
+    
+    <!-- 建立地點模態對話框 -->
+    <div id="createLocationModal" class="modal">
+        <div class="modal-box w-11/12 max-w-2xl">
+            <form id="createLocationForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <h3 class="font-bold text-lg mb-4">
+                    <i class="fas fa-plus text-primary mr-2"></i>
+                    新增地點
+                </h3>
+                
+                <!-- 必填欄位 -->
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">地點名稱 <span class="text-error">*</span></span>
+                    </label>
+                    <input type="text" name="name" placeholder="請輸入地點名稱" class="input input-bordered w-full" required>
+                </div>
+                
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">地址 <span class="text-error">*</span></span>
+                    </label>
+                    <input type="text" name="address" placeholder="請輸入地址" class="input input-bordered w-full" required>
+                </div>
+                
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">Google Maps 網址 <span class="text-error">*</span></span>
+                    </label>
+                    <input type="url" name="google_maps_url" placeholder="請貼上 Google Maps 網址" class="input input-bordered w-full" required>
+                </div>
+                
+                <!-- 選填欄位 -->
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">地點描述</span>
+                    </label>
+                    <textarea name="description" class="textarea textarea-bordered" placeholder="請輸入地點描述" rows="2"></textarea>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">到達時間</span>
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="number" name="arrived_hour" min="0" max="23" placeholder="時" class="input input-bordered w-20">
+                            <input type="number" name="arrived_minute" min="0" max="59" placeholder="分" class="input input-bordered w-20">
+                        </div>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">離開時間</span>
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="number" name="departure_hour" min="0" max="23" placeholder="時" class="input input-bordered w-20">
+                            <input type="number" name="departure_minute" min="0" max="59" placeholder="分" class="input input-bordered w-20">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 照片上傳（最多3張） -->
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">地點照片（最多3張）</span>
+                    </label>
+                    <div class="space-y-2">
+                        <div>
+                            <input type="file" name="image_0" class="file-input file-input-bordered file-input-sm w-full" accept="image/*">
+                            <input type="text" name="caption_0" placeholder="照片說明（選填）" class="input input-bordered input-sm w-full mt-1">
+                        </div>
+                        <div>
+                            <input type="file" name="image_1" class="file-input file-input-bordered file-input-sm w-full" accept="image/*">
+                            <input type="text" name="caption_1" placeholder="照片說明（選填）" class="input input-bordered input-sm w-full mt-1">
+                        </div>
+                        <div>
+                            <input type="file" name="image_2" class="file-input file-input-bordered file-input-sm w-full" accept="image/*">
+                            <input type="text" name="caption_2" placeholder="照片說明（選填）" class="input input-bordered input-sm w-full mt-1">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-action">
+                    <button type="button" class="btn" onclick="closeCreateLocationModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">建立地點</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 編輯地點模態對話框 -->
+    <div id="editLocationModal" class="modal">
+        <div class="modal-box w-11/12 max-w-2xl">
+            <form id="editLocationForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" id="editLocationId" name="location_id">
+                
+                <h3 class="font-bold text-lg mb-4">
+                    <i class="fas fa-edit text-secondary mr-2"></i>
+                    編輯地點時間
+                </h3>
+                
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    編輯地點時只能修改到達和離開時間，其他資訊請於後台管理介面修改。
+                </div>
+                
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">地點名稱</span>
+                    </label>
+                    <input type="text" id="editLocationName" class="input input-bordered w-full" disabled>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">到達時間</span>
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="number" id="editArrivedHour" name="arrived_hour" min="0" max="23" placeholder="時" class="input input-bordered w-20">
+                            <input type="number" id="editArrivedMinute" name="arrived_minute" min="0" max="59" placeholder="分" class="input input-bordered w-20">
+                        </div>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">離開時間</span>
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="number" id="editDepartureHour" name="departure_hour" min="0" max="23" placeholder="時" class="input input-bordered w-20">
+                            <input type="number" id="editDepartureMinute" name="departure_minute" min="0" max="59" placeholder="分" class="input input-bordered w-20">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 新增照片（如果還有額度） -->
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">新增地點照片</span>
+                    </label>
+                    <div class="space-y-2">
+                        <div>
+                            <input type="file" name="image_0" class="file-input file-input-bordered file-input-sm w-full" accept="image/*">
+                            <input type="text" name="caption_0" placeholder="照片說明（選填）" class="input input-bordered input-sm w-full mt-1">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-action">
+                    <button type="button" class="btn" onclick="closeEditLocationModal()">取消</button>
+                    <button type="submit" class="btn btn-secondary">更新時間</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // 新增地點相關函數
+        function openCreateLocationModal() {
+            document.getElementById('createLocationModal').classList.add('modal-open');
+        }
+        
+        function closeCreateLocationModal() {
+            document.getElementById('createLocationModal').classList.remove('modal-open');
+            document.getElementById('createLocationForm').reset();
+        }
+        
+        function openEditLocationModal(locationId, locationName, arrivedHour, arrivedMinute, departureHour, departureMinute) {
+            document.getElementById('editLocationId').value = locationId;
+            document.getElementById('editLocationName').value = locationName;
+            
+            // 設定時間值
+            document.getElementById('editArrivedHour').value = arrivedHour !== null ? arrivedHour : '';
+            document.getElementById('editArrivedMinute').value = arrivedMinute !== null ? arrivedMinute : '';
+            document.getElementById('editDepartureHour').value = departureHour !== null ? departureHour : '';
+            document.getElementById('editDepartureMinute').value = departureMinute !== null ? departureMinute : '';
+            
+            // 設定表單 action
+            const form = document.getElementById('editLocationForm');
+            form.action = `/itineraries/{{ itinerary.id }}/locations/${locationId}/edit/`;
+            
+            document.getElementById('editLocationModal').classList.add('modal-open');
+        }
+        
+        function closeEditLocationModal() {
+            document.getElementById('editLocationModal').classList.remove('modal-open');
+            document.getElementById('editLocationForm').reset();
+        }
+        
+        // 刪除地點
+        function deleteLocation(locationId) {
+            if (confirm('確定要刪除這個地點嗎？')) {
+                fetch(`/itineraries/{{ itinerary.id }}/locations/${locationId}/delete/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.error || '刪除失敗');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('刪除地點時發生錯誤');
+                });
+            }
+        }
+        
+        // 移動地點
+        function moveLocation(locationId, direction) {
+            const formData = new FormData();
+            formData.append('direction', direction);
+            
+            fetch(`/itineraries/{{ itinerary.id }}/locations/${locationId}/move/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || '移動失敗');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('移動地點時發生錯誤');
+            });
+        }
+        
+        // 表單提交處理
+        document.getElementById('createLocationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch(`/itineraries/{{ itinerary.id }}/locations/create/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || '建立地點失敗');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('建立地點時發生錯誤');
+            });
+        });
+        
+        document.getElementById('editLocationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const locationId = document.getElementById('editLocationId').value;
+            
+            fetch(`/itineraries/{{ itinerary.id }}/locations/${locationId}/edit/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || '更新地點失敗');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('更新地點時發生錯誤');
+            });
+        });
+        
+        // 點擊模態背景關閉
+        document.getElementById('createLocationModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCreateLocationModal();
+            }
+        });
+        
+        document.getElementById('editLocationModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditLocationModal();
+            }
+        });
+    </script>
 {% endblock %}

@@ -55,6 +55,8 @@ class Location(models.Model):
     place_types = models.CharField(max_length=200, blank=True, null=True, help_text="地點類型")
     arrived_hour = models.IntegerField(blank=True, null=True, help_text="到達小時 (0-23)")
     arrived_minute = models.IntegerField(blank=True, null=True, help_text="到達分鐘 (0-59)")
+    departure_hour = models.IntegerField(blank=True, null=True, help_text="離開小時 (0-23)")
+    departure_minute = models.IntegerField(blank=True, null=True, help_text="離開分鐘 (0-59)")
     order = models.PositiveIntegerField(default=0, help_text="在行程中的順序")
     created_at = models.DateTimeField(auto_now_add=True)
 
