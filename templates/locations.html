@@ -83,7 +83,8 @@
                          data-location-id="{{ location.id }}" 
                          draggable="true">
                         <div class="card-body">
-                            <div class="flex items-start gap-6">
+                            <!-- 桌面版：左右佈局，手機版：上下佈局 -->
+                            <div class="flex flex-col lg:flex-row items-start gap-6">
                                 <!-- 順序標籤和拖拉指示器 -->
                                 <div class="flex-shrink-0 flex flex-col items-center gap-2">
                                     <div class="badge badge-primary badge-lg">
@@ -96,9 +97,8 @@
                                 </div>
 
                                 <!-- 景點資訊 -->
-                                <div class="flex-1">
+                                <div class="flex-1 min-w-0">
                                     <h3 class="card-title text-xl font-bold mb-3">
-                                        <i class="fas fa-location-dot text-error mr-2"></i>
                                         {{ location.name }}
                                     </h3>
 
@@ -117,7 +117,8 @@
                                             </div>
                                         {% endif %}
                                     </div>
-                                <div class="flex flex-wrap items-center gap-4 mb-4">
+                                    
+                                    <div class="flex flex-wrap items-center gap-4 mb-4">
                                         {% if location.rating %}
                                             <div class="badge badge-warning badge-outline">
                                                 <i class="fas fa-star mr-1"></i>
@@ -131,9 +132,9 @@
                                                 {{ location.place_types }}
                                             </div>
                                         {% endif %}
-
                                     </div>
-                                <div class="flex flex-wrap items-center gap-4 mb-4">
+                                    
+                                    <div class="flex flex-wrap items-center gap-4 mb-4">
                                         {% if location.google_maps_url %}
                                             <a href="{{ location.google_maps_url }}"
                                                target="_blank"
@@ -174,35 +175,54 @@
                                         </button>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- 景點照片 -->
-                            {% if location.locationphoto_set.all %}
-                                <div class="mt-6">
-                                    <h4 class="text-lg font-semibold mb-3 flex items-center">
-                                        <i class="fas fa-images text-info mr-2"></i>
-                                        景點照片
-                                    </h4>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {% for photo in location.locationphoto_set.all %}
-                                            <div class="card bg-base-100 shadow-md">
-                                                <figure class="px-4 pt-4">
-                                                    <img src="{{ photo.image.url }}"
-                                                         alt="{{ photo.caption|default:location.name }}"
-                                                         class="rounded-lg object-cover w-full h-48">
-                                                </figure>
-                                                {% if photo.caption %}
-                                                    <div class="card-body pt-2">
-                                                        <p class="text-sm text-base-content opacity-70">
-                                                            {{ photo.caption }}
-                                                        </p>
+                                <!-- 景點照片 - 桌面版在右側，手機版在下方 -->
+                                {% if location.locationphoto_set.all %}
+                                    <div class="flex-shrink-0 w-full lg:w-80">
+                                        <div class="photo-carousel" data-location-id="{{ location.id }}">
+                                            <div class="relative">
+                                                <!-- 圖片容器 -->
+                                                <div class="carousel-container overflow-hidden rounded-lg">
+                                                    <div class="carousel-track flex transition-transform duration-300 ease-in-out">
+                                                        {% for photo in location.locationphoto_set.all %}
+                                                            <div class="carousel-slide flex-shrink-0 w-full relative">
+                                                                <img src="{{ photo.image.url }}"
+                                                                     alt="{{ photo.caption|default:location.name }}"
+                                                                     class="w-full h-48 lg:h-56 object-cover">
+                                                                {% if photo.caption %}
+                                                                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent text-white p-3">
+                                                                        <p class="text-sm font-medium">{{ photo.caption }}</p>
+                                                                    </div>
+                                                                {% endif %}
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- 控制按鈕 - 只在多張圖片時顯示 -->
+                                                {% if location.locationphoto_set.all|length > 1 %}
+                                                    <button class="carousel-btn carousel-prev absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 hover:bg-opacity-80 text-white rounded-full w-8 h-8 flex items-center justify-center transition-all duration-200"
+                                                            onclick="previousSlide({{ location.id }})">
+                                                        <i class="fas fa-chevron-left text-sm"></i>
+                                                    </button>
+                                                    <button class="carousel-btn carousel-next absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 hover:bg-opacity-80 text-white rounded-full w-8 h-8 flex items-center justify-center transition-all duration-200"
+                                                            onclick="nextSlide({{ location.id }})">
+                                                        <i class="fas fa-chevron-right text-sm"></i>
+                                                    </button>
+                                                    
+                                                    <!-- 指示點 -->
+                                                    <div class="carousel-indicators absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2">
+                                                        {% for photo in location.locationphoto_set.all %}
+                                                            <button class="indicator-dot w-2 h-2 rounded-full bg-white bg-opacity-60 hover:bg-opacity-100 transition-all duration-200 {% if forloop.first %}active{% endif %}"
+                                                                    onclick="goToSlide({{ location.id }}, {{ forloop.counter0 }})"></button>
+                                                        {% endfor %}
                                                     </div>
                                                 {% endif %}
                                             </div>
-                                        {% endfor %}
+                                        </div>
                                     </div>
-                                </div>
-                            {% endif %}
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 {% endfor %}
@@ -836,16 +856,136 @@
             }
         });
         
+        // 圖片輪播功能
+        const carouselStates = {};
+        
+        function initializeCarousels() {
+            document.querySelectorAll('.photo-carousel').forEach(carousel => {
+                const locationId = carousel.getAttribute('data-location-id');
+                const slides = carousel.querySelectorAll('.carousel-slide');
+                
+                carouselStates[locationId] = {
+                    currentSlide: 0,
+                    totalSlides: slides.length,
+                    carousel: carousel
+                };
+                
+                // 初始化指示點狀態
+                updateIndicators(locationId);
+            });
+        }
+        
+        function previousSlide(locationId) {
+            const state = carouselStates[locationId];
+            if (!state) return;
+            
+            state.currentSlide = state.currentSlide > 0 ? state.currentSlide - 1 : state.totalSlides - 1;
+            updateCarousel(locationId);
+        }
+        
+        function nextSlide(locationId) {
+            const state = carouselStates[locationId];
+            if (!state) return;
+            
+            state.currentSlide = state.currentSlide < state.totalSlides - 1 ? state.currentSlide + 1 : 0;
+            updateCarousel(locationId);
+        }
+        
+        function goToSlide(locationId, slideIndex) {
+            const state = carouselStates[locationId];
+            if (!state) return;
+            
+            state.currentSlide = slideIndex;
+            updateCarousel(locationId);
+        }
+        
+        function updateCarousel(locationId) {
+            const state = carouselStates[locationId];
+            if (!state) return;
+            
+            const track = state.carousel.querySelector('.carousel-track');
+            const translateX = -state.currentSlide * 100;
+            track.style.transform = `translateX(${translateX}%)`;
+            
+            updateIndicators(locationId);
+        }
+        
+        function updateIndicators(locationId) {
+            const state = carouselStates[locationId];
+            if (!state) return;
+            
+            const indicators = state.carousel.querySelectorAll('.indicator-dot');
+            indicators.forEach((dot, index) => {
+                if (index === state.currentSlide) {
+                    dot.classList.add('active');
+                    dot.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+                } else {
+                    dot.classList.remove('active');
+                    dot.style.backgroundColor = 'rgba(255, 255, 255, 0.6)';
+                }
+            });
+        }
+        
+        // 鍵盤導航支援
+        function handleKeyboardNavigation(e, locationId) {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                previousSlide(locationId);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                nextSlide(locationId);
+            }
+        }
+        
+        // 觸控支援
+        function initializeTouchSupport() {
+            document.querySelectorAll('.photo-carousel').forEach(carousel => {
+                const locationId = carousel.getAttribute('data-location-id');
+                let startX = 0;
+                let currentX = 0;
+                let isDragging = false;
+                
+                carousel.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].clientX;
+                    isDragging = true;
+                });
+                
+                carousel.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    currentX = e.touches[0].clientX;
+                });
+                
+                carousel.addEventListener('touchend', (e) => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    
+                    const deltaX = startX - currentX;
+                    const threshold = 50; // 最小滑動距離
+                    
+                    if (Math.abs(deltaX) > threshold) {
+                        if (deltaX > 0) {
+                            nextSlide(parseInt(locationId));
+                        } else {
+                            previousSlide(parseInt(locationId));
+                        }
+                    }
+                });
+            });
+        }
+        
         // 初始化拖拉排序功能
         document.addEventListener('DOMContentLoaded', function() {
             {% if locations %}
                 initializeDragAndDrop();
+                initializeCarousels();
+                initializeTouchSupport();
             {% endif %}
         });
     </script>
     
-    <!-- 拖拉排序的CSS樣式 -->
+    <!-- 拖拉排序和輪播的CSS樣式 -->
     <style>
+        /* 拖拉排序樣式 */
         .location-item {
             transition: all 0.3s ease;
         }
@@ -880,12 +1020,91 @@
             color: #1f2937 !important;
         }
         
+        /* 輪播樣式 */
+        .photo-carousel {
+            user-select: none;
+        }
+        
+        .carousel-container {
+            position: relative;
+        }
+        
+        .carousel-track {
+            display: flex;
+        }
+        
+        .carousel-slide {
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .carousel-btn {
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .photo-carousel:hover .carousel-btn {
+            opacity: 1;
+        }
+        
+        .carousel-btn:hover {
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .carousel-indicators {
+            z-index: 10;
+        }
+        
+        .indicator-dot.active {
+            background-color: rgba(255, 255, 255, 1) !important;
+        }
+        
+        /* 響應式調整 */
+        @media (max-width: 1023px) {
+            /* 手機版和平板版 */
+            .photo-carousel {
+                width: 100% !important;
+            }
+            
+            .carousel-slide img {
+                height: 12rem; /* h-48 */
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            /* 桌面版 */
+            .carousel-slide img {
+                height: 14rem; /* h-56 */
+            }
+        }
+        
         /* 改善觸控設備的拖拉體驗 */
         @media (pointer: coarse) {
             .drag-handle {
                 font-size: 1.25rem;
                 padding: 0.5rem;
             }
+            
+            .carousel-btn {
+                opacity: 1;
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+            
+            .indicator-dot {
+                width: 0.75rem;
+                height: 0.75rem;
+            }
+        }
+        
+        /* 防止在拖拉地點時觸發輪播 */
+        .location-item[draggable="true"] .photo-carousel {
+            pointer-events: none;
+        }
+        
+        .location-item:not([draggable="true"]) .photo-carousel {
+            pointer-events: auto;
         }
     </style>
 {% endblock %}
