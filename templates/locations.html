@@ -77,16 +77,21 @@
         </div>
 
         {% if locations %}
-            <div class="space-y-6">
+            <div id="locationsList" class="space-y-6">
                 {% for location in locations %}
-                    <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <div class="location-item card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-move" 
+                         data-location-id="{{ location.id }}" 
+                         draggable="true">
                         <div class="card-body">
                             <div class="flex items-start gap-6">
-                                <!-- 順序標籤 -->
-                                <div class="flex-shrink-0">
+                                <!-- 順序標籤和拖拉指示器 -->
+                                <div class="flex-shrink-0 flex flex-col items-center gap-2">
                                     <div class="badge badge-primary badge-lg">
                                         <i class="fas fa-map-pin mr-1"></i>
                                         {{ location.order|default:forloop.counter }}
+                                    </div>
+                                    <div class="drag-handle text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                                        <i class="fas fa-grip-vertical text-lg"></i>
                                     </div>
                                 </div>
 
@@ -144,7 +149,7 @@
                                         {% if location.arrived_hour is not None and location.arrived_minute is not None %}
                                             <div class="badge badge-outline">
                                                 <i class="fas fa-clock mr-1"></i>
-                                                到達: {{ location.arrived_hour|stringformat:"02d" }}:{{ location.arrived_minute|stringformat:"02d" }}
+                                                抵達: {{ location.arrived_hour|stringformat:"02d" }}:{{ location.arrived_minute|stringformat:"02d" }}
                                             </div>
                                         {% endif %}
                                         {% if location.departure_hour is not None and location.departure_minute is not None %}
@@ -167,20 +172,6 @@
                                             <i class="fas fa-trash mr-1"></i>
                                             刪除
                                         </button>
-                                        {% if location.order > 1 %}
-                                            <button onclick="moveLocation({{ location.id }}, 'up')" 
-                                                    class="btn btn-sm btn-outline">
-                                                <i class="fas fa-arrow-up mr-1"></i>
-                                                上移
-                                            </button>
-                                        {% endif %}
-                                        {% if not forloop.last %}
-                                            <button onclick="moveLocation({{ location.id }}, 'down')" 
-                                                    class="btn btn-sm btn-outline">
-                                                <i class="fas fa-arrow-down mr-1"></i>
-                                                下移
-                                            </button>
-                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -653,29 +644,130 @@
             }
         }
         
-        // 移動地點
-        function moveLocation(locationId, direction) {
-            const formData = new FormData();
-            formData.append('direction', direction);
+        // 拖拉排序功能
+        let draggedElement = null;
+        
+        function initializeDragAndDrop() {
+            const locationsList = document.getElementById('locationsList');
+            const locationItems = document.querySelectorAll('.location-item');
             
-            fetch(`/itineraries/{{ itinerary.id }}/locations/${locationId}/move/`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            locationItems.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+        }
+        
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.style.opacity = '0.5';
+            
+            // 設定拖拉效果
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.outerHTML);
+        }
+        
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            
+            e.dataTransfer.dropEffect = 'move';
+            
+            // 添加視覺提示
+            if (this !== draggedElement) {
+                const rect = this.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                
+                if (e.clientY < midY) {
+                    this.style.borderTop = '3px solid #3b82f6';
+                    this.style.borderBottom = '';
+                } else {
+                    this.style.borderBottom = '3px solid #3b82f6';
+                    this.style.borderTop = '';
                 }
+            }
+            
+            return false;
+        }
+        
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            if (draggedElement !== this) {
+                const rect = this.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                const locationsList = document.getElementById('locationsList');
+                
+                if (e.clientY < midY) {
+                    locationsList.insertBefore(draggedElement, this);
+                } else {
+                    locationsList.insertBefore(draggedElement, this.nextSibling);
+                }
+                
+                // 更新順序到伺服器
+                updateLocationOrder();
+            }
+            
+            return false;
+        }
+        
+        function handleDragEnd(e) {
+            this.style.opacity = '';
+            
+            // 清除所有視覺提示
+            document.querySelectorAll('.location-item').forEach(item => {
+                item.style.borderTop = '';
+                item.style.borderBottom = '';
+            });
+            
+            draggedElement = null;
+        }
+        
+        function updateLocationOrder() {
+            const locationItems = document.querySelectorAll('.location-item');
+            const locationIds = Array.from(locationItems).map(item => 
+                parseInt(item.getAttribute('data-location-id'))
+            );
+            
+            fetch(`/itineraries/{{ itinerary.id }}/locations/reorder/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    location_ids: locationIds
+                })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    location.reload();
+                    // 更新順序標籤
+                    locationItems.forEach((item, index) => {
+                        const badge = item.querySelector('.badge');
+                        if (badge) {
+                            const icon = badge.querySelector('i');
+                            badge.innerHTML = '';
+                            badge.appendChild(icon);
+                            badge.appendChild(document.createTextNode(` ${index + 1}`));
+                        }
+                    });
+                    
+                    // 顯示成功訊息（可選）
+                    console.log('地點順序已更新');
                 } else {
-                    alert(data.error || '移動失敗');
+                    alert(data.error || '更新順序失敗');
+                    location.reload(); // 重新載入頁面以恢復原始順序
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('移動地點時發生錯誤');
+                alert('更新順序時發生錯誤');
+                location.reload(); // 重新載入頁面以恢復原始順序
             });
         }
         
@@ -743,5 +835,57 @@
                 closeEditLocationModal();
             }
         });
+        
+        // 初始化拖拉排序功能
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if locations %}
+                initializeDragAndDrop();
+            {% endif %}
+        });
     </script>
+    
+    <!-- 拖拉排序的CSS樣式 -->
+    <style>
+        .location-item {
+            transition: all 0.3s ease;
+        }
+        
+        .location-item:hover .drag-handle {
+            color: #6b7280 !important;
+        }
+        
+        .location-item.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .location-item.drag-over-top {
+            border-top: 3px solid #3b82f6;
+        }
+        
+        .location-item.drag-over-bottom {
+            border-bottom: 3px solid #3b82f6;
+        }
+        
+        .drag-handle {
+            transition: color 0.2s ease;
+        }
+        
+        .drag-handle:hover {
+            color: #374151 !important;
+        }
+        
+        .drag-handle:active {
+            color: #1f2937 !important;
+        }
+        
+        /* 改善觸控設備的拖拉體驗 */
+        @media (pointer: coarse) {
+            .drag-handle {
+                font-size: 1.25rem;
+                padding: 0.5rem;
+            }
+        }
+    </style>
 {% endblock %}

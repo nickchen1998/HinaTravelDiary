@@ -206,49 +206,43 @@ def delete_location(request, itinerary_id, location_id):
 
 
 @require_http_methods(["POST"])
-def move_location(request, itinerary_id, location_id):
-    """移動地點順序"""
+def reorder_locations(request, itinerary_id):
+    """重新排序地點"""
     try:
         itinerary = get_object_or_404(Itinerary, id=itinerary_id)
-        location = get_object_or_404(Location, id=location_id, itinerary=itinerary)
         
-        direction = request.POST.get('direction')
-        if direction not in ['up', 'down']:
-            return JsonResponse({'error': '無效的移動方向'}, status=400)
+        # 獲取新的順序列表（location_id 的陣列）
+        import json
+        data = json.loads(request.body)
+        location_ids = data.get('location_ids', [])
         
-        current_order = location.order
+        if not location_ids:
+            return JsonResponse({'error': '請提供地點順序列表'}, status=400)
         
-        if direction == 'up' and current_order > 1:
-            # 向上移動
-            other_location = Location.objects.get(
+        # 驗證所有 location_ids 都屬於這個行程
+        existing_locations = set(
+            Location.objects.filter(
                 itinerary=itinerary,
-                order=current_order - 1
-            )
-            location.order = current_order - 1
-            other_location.order = current_order
-            location.save()
-            other_location.save()
-            
-        elif direction == 'down':
-            # 向下移動
-            max_order = Location.objects.filter(itinerary=itinerary).aggregate(
-                max_order=models.Max('order')
-            )['max_order']
-            
-            if current_order < max_order:
-                other_location = Location.objects.get(
-                    itinerary=itinerary,
-                    order=current_order + 1
-                )
-                location.order = current_order + 1
-                other_location.order = current_order
-                location.save()
-                other_location.save()
+                id__in=location_ids
+            ).values_list('id', flat=True)
+        )
+        
+        if len(existing_locations) != len(location_ids):
+            return JsonResponse({'error': '無效的地點順序列表'}, status=400)
+        
+        # 批量更新順序
+        for new_order, location_id in enumerate(location_ids, 1):
+            Location.objects.filter(
+                id=location_id,
+                itinerary=itinerary
+            ).update(order=new_order)
         
         return JsonResponse({
             'success': True,
             'message': '地點順序已更新'
         })
         
+    except json.JSONDecodeError:
+        return JsonResponse({'error': '無效的JSON格式'}, status=400)
     except Exception as e:
-        return JsonResponse({'error': f'移動地點時發生錯誤：{str(e)}'}, status=500)
+        return JsonResponse({'error': f'重新排序時發生錯誤：{str(e)}'}, status=500)

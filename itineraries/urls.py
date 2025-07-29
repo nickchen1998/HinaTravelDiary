@@ -12,5 +12,5 @@ urlpatterns = [
     path('itineraries/<int:itinerary_id>/locations/create/', views.create_location, name='create_location'),
     path('itineraries/<int:itinerary_id>/locations/<int:location_id>/edit/', views.edit_location, name='edit_location'),
     path('itineraries/<int:itinerary_id>/locations/<int:location_id>/delete/', views.delete_location, name='delete_location'),
-    path('itineraries/<int:itinerary_id>/locations/<int:location_id>/move/', views.move_location, name='move_location'),
+    path('itineraries/<int:itinerary_id>/locations/reorder/', views.reorder_locations, name='reorder_locations'),
 ]
