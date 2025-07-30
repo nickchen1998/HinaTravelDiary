@@ -201,12 +201,14 @@
                                                 
                                                 <!-- 控制按鈕 - 只在多張圖片時顯示 -->
                                                 {% if location.locationphoto_set.all|length > 1 %}
-                                                    <button class="carousel-btn carousel-prev absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 hover:bg-opacity-80 text-white rounded-full w-8 h-8 flex items-center justify-center transition-all duration-200"
-                                                            onclick="previousSlide({{ location.id }})">
+                                                    <button class="carousel-btn carousel-prev absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-70 hover:bg-opacity-90 text-white rounded-full w-10 h-10 flex items-center justify-center transition-all duration-200 shadow-lg"
+                                                            onclick="previousSlide({{ location.id }})"
+                                                            type="button">
                                                         <i class="fas fa-chevron-left text-sm"></i>
                                                     </button>
-                                                    <button class="carousel-btn carousel-next absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 hover:bg-opacity-80 text-white rounded-full w-8 h-8 flex items-center justify-center transition-all duration-200"
-                                                            onclick="nextSlide({{ location.id }})">
+                                                    <button class="carousel-btn carousel-next absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-70 hover:bg-opacity-90 text-white rounded-full w-10 h-10 flex items-center justify-center transition-all duration-200 shadow-lg"
+                                                            onclick="nextSlide({{ location.id }})"
+                                                            type="button">
                                                         <i class="fas fa-chevron-right text-sm"></i>
                                                     </button>
                                                     
@@ -1040,8 +1042,8 @@
         
         .carousel-btn {
             z-index: 10;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            opacity: 0.7;
+            transition: all 0.3s ease;
         }
         
         .photo-carousel:hover .carousel-btn {
@@ -1087,7 +1089,7 @@
             }
             
             .carousel-btn {
-                opacity: 1;
+                opacity: 1 !important;
                 width: 2.5rem;
                 height: 2.5rem;
             }

@@ -97,11 +97,19 @@ def create_location(request, itinerary_id):
         
         # 設定時間（如果有提供）
         if arrived_hour and arrived_minute:
-            location.arrived_hour = int(arrived_hour)
-            location.arrived_minute = int(arrived_minute)
+            try:
+                location.arrived_hour = int(arrived_hour)
+                location.arrived_minute = int(arrived_minute)
+            except (ValueError, TypeError):
+                pass
         if departure_hour and departure_minute:
-            location.departure_hour = int(departure_hour)
-            location.departure_minute = int(departure_minute)
+            try:
+                location.departure_hour = int(departure_hour)
+                location.departure_minute = int(departure_minute)
+            except (ValueError, TypeError):
+                pass
+        
+        location.save()
         
         # 使用 LocationHandler 自動填入經緯度、評分等資訊
         handler = LocationHandler()
