@@ -111,9 +111,9 @@ def create_location(request, itinerary_id):
         
         location.save()
         
-        # 使用 LocationHandler 自動填入經緯度、評分等資訊
-        handler = LocationHandler()
-        handler.update_location_from_google_maps(location, google_maps_url)
+        # 使用 update_location_from_google_maps 自動填入經緯度、評分等資訊
+        from .utils import update_location_from_google_maps
+        update_location_from_google_maps(location, google_maps_url)
         
         # 處理照片上傳（最多3張）
         for i in range(3):
