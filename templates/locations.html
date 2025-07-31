@@ -741,9 +741,8 @@
             // 清除拖曳效果
             clearDragEffects();
             
-            // 立即更新 UI
+            // 立即更新順序編號（MutationObserver 會自動處理空容器狀態和計數）
             updateTimeSlotOrderNumbers();
-            updateTimeSlotCounts();
             
             // 更新順序到伺服器
             updateLocationOrder();
@@ -806,14 +805,55 @@
                     countElement.textContent = `共 ${items.length} 個地點`;
                 }
                 
-                // 強制更新空容器狀態
+                // 直接根據子元素數量更新狀態
+                updateContainerEmptyState(container);
+            });
+        }
+
+        function updateContainerEmptyState(container) {
+            const items = container.querySelectorAll('.location-item');
+            if (items.length === 0) {
+                container.classList.add('empty-container');
+            } else {
                 container.classList.remove('empty-container');
-                if (items.length === 0) {
-                    // 使用 setTimeout 確保 DOM 更新後再添加類
-                    setTimeout(() => {
-                        container.classList.add('empty-container');
-                    }, 10);
-                }
+            }
+        }
+
+        function initializeContainerObservers() {
+            // 為每個時段容器設置 MutationObserver
+            ['morning', 'afternoon', 'evening'].forEach(timeSlot => {
+                const container = document.getElementById(`locationsList-${timeSlot}`);
+                if (!container) return;
+
+                // 初始化狀態
+                updateContainerEmptyState(container);
+
+                // 設置觀察器
+                const observer = new MutationObserver((mutations) => {
+                    let shouldUpdate = false;
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === 'childList') {
+                            shouldUpdate = true;
+                        }
+                    });
+                    
+                    if (shouldUpdate) {
+                        updateContainerEmptyState(container);
+                        
+                        // 同時更新計數
+                        const timeSlotSection = container.closest('.time-slot-section');
+                        const countElement = timeSlotSection.querySelector('.text-sm.text-base-content.opacity-60');
+                        const items = container.querySelectorAll('.location-item');
+                        if (countElement) {
+                            countElement.textContent = `共 ${items.length} 個地點`;
+                        }
+                    }
+                });
+
+                observer.observe(container, {
+                    childList: true,
+                    subtree: false
+                });
             });
         }
 
@@ -928,6 +968,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             {% if locations %}
                 initializeDragAndDrop();
+                initializeContainerObservers(); // 初始化容器觀察器
                 updateTimeSlotCounts(); // 初始化時段狀態
             {% endif %}
         });
