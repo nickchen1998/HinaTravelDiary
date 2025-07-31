@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db import models
 from django.db.models import F
 from journeys.models import Journey
-from .models import Itinerary, Location, LocationPhoto
+from .models import Itinerary, Location
 from .utils import LocationHandler
 
 
@@ -146,16 +146,6 @@ def create_location(request, itinerary_id):
         from .utils import update_location_from_google_maps
         update_location_from_google_maps(location, google_maps_url)
         
-        # 處理照片上傳（最多3張）
-        for i in range(3):
-            image = request.FILES.get(f'image_{i}')
-            if image:
-                LocationPhoto.objects.create(
-                    location=location,
-                    image=image,
-                    caption=request.POST.get(f'caption_{i}', '')
-                )
-        
         return JsonResponse({
             'success': True,
             'message': f'地點「{location.name}」建立成功！'
@@ -204,18 +194,6 @@ def edit_location(request, itinerary_id, location_id):
         location.time_slot = time_slot_map.get(time_slot, TimeSlotChoices.MORNING)
         
         location.save()
-        
-        # 處理照片上傳（最多3張）
-        existing_photos = location.locationphoto_set.count()
-        
-        for i in range(3):
-            image = request.FILES.get(f'image_{i}')
-            if image and existing_photos + i < 3:
-                LocationPhoto.objects.create(
-                    location=location,
-                    image=image,
-                    caption=request.POST.get(f'caption_{i}', '')
-                )
         
         return JsonResponse({
             'success': True,
