@@ -1,5 +1,6 @@
 from django.db import models
 import uuid
+from django.contrib.auth.models import User
 
 
 class Country(models.Model):
@@ -41,6 +42,7 @@ class Journey(models.Model):
     end_date = models.DateField()
 
     is_highlighted = models.BooleanField(default=False, help_text="是否為精選旅程")
+    author = models.ForeignKey(User, on_delete=models.CASCADE, help_text="旅程作者", default=1)
 
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
