@@ -577,11 +577,16 @@
     <script>
         // 新增地點相關函數
         function openCreateLocationModal() {
-            document.getElementById('createLocationModal').classList.add('modal-open');
+            const modal = document.getElementById('createLocationModal');
+            modal.classList.add('modal-open');
+            // 確保模態框顯示
+            modal.style.display = 'flex';
         }
 
         function closeCreateLocationModal() {
-            document.getElementById('createLocationModal').classList.remove('modal-open');
+            const modal = document.getElementById('createLocationModal');
+            modal.classList.remove('modal-open');
+            modal.style.display = 'none';
             document.getElementById('createLocationForm').reset();
         }
 
@@ -600,11 +605,15 @@
             const form = document.getElementById('editLocationForm');
             form.action = `/itineraries/{{ itinerary.id }}/locations/${locationId}/edit/`;
 
-            document.getElementById('editLocationModal').classList.add('modal-open');
+            const modal = document.getElementById('editLocationModal');
+            modal.classList.add('modal-open');
+            modal.style.display = 'flex';
         }
 
         function closeEditLocationModal() {
-            document.getElementById('editLocationModal').classList.remove('modal-open');
+            const modal = document.getElementById('editLocationModal');
+            modal.classList.remove('modal-open');
+            modal.style.display = 'none';
             document.getElementById('editLocationForm').reset();
         }
 
@@ -859,6 +868,9 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        // 關閉模態框
+                        closeCreateLocationModal();
+                        // 重新載入頁面以顯示新地點
                         location.reload();
                     } else {
                         alert(data.error || '建立地點失敗');
@@ -885,6 +897,9 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
+                        // 關閉模態框
+                        closeEditLocationModal();
+                        // 重新載入頁面以顯示更新
                         location.reload();
                     } else {
                         alert(data.error || '更新地點失敗');
@@ -1022,6 +1037,15 @@
             height: 40px;
             background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.9));
             pointer-events: none;
+        }
+        
+        /* 確保模態框正確顯示 */
+        .modal {
+            display: none;
+        }
+        
+        .modal.modal-open {
+            display: flex !important;
         }
     </style>
 {% endblock %}
