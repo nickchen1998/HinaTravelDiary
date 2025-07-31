@@ -38,15 +38,15 @@
     <!-- 地圖區域 -->
     {% if locations %}
         <div class="mb-8">
-            <div class="text-center mb-6">
-                <h2 class="text-3xl font-bold text-base-content mb-4">
-                    <i class="fas fa-map text-primary mr-2"></i>
-                    景點地圖
-                </h2>
-                <p class="text-lg text-base-content opacity-70">
-                    所有景點的地理位置一覽
-                </p>
-            </div>
+{#            <div class="text-center mb-6">#}
+{#                <h2 class="text-3xl font-bold text-base-content mb-4">#}
+{#                    <i class="fas fa-map text-primary mr-2"></i>#}
+{#                    景點地圖#}
+{#                </h2>#}
+{#                <p class="text-lg text-base-content opacity-70">#}
+{#                    所有景點的地理位置一覽#}
+{#                </p>#}
+{#            </div>#}
 
             <div class="card bg-base-100 shadow-xl mb-8">
                 <div class="card-body p-0">
@@ -654,12 +654,25 @@
 
         function initializeDragAndDrop() {
             const locationItems = document.querySelectorAll('.location-item');
+            const containers = document.querySelectorAll('.locations-container');
 
             locationItems.forEach(item => {
                 item.addEventListener('dragstart', handleDragStart);
                 item.addEventListener('dragover', handleDragOver);
                 item.addEventListener('drop', handleDrop);
                 item.addEventListener('dragend', handleDragEnd);
+            });
+            
+            // 為容器添加拖曳事件
+            containers.forEach(container => {
+                container.addEventListener('dragover', handleDragOver);
+                container.addEventListener('drop', handleDrop);
+                container.addEventListener('dragleave', (e) => {
+                    // 只有當滑鼠離開容器且不在其子元素上時才清除效果
+                    if (!container.contains(e.relatedTarget)) {
+                        container.classList.remove('drag-over');
+                    }
+                });
             });
         }
 
@@ -679,17 +692,24 @@
 
             e.dataTransfer.dropEffect = 'move';
 
+            // 檢查是否拖曳到容器上
+            const container = e.target.closest('.locations-container');
+            if (container && !container.classList.contains('drag-over')) {
+                container.classList.add('drag-over');
+            }
+
             // 添加視覺提示
-            if (this !== draggedElement) {
-                const rect = this.getBoundingClientRect();
+            const locationItem = e.target.closest('.location-item');
+            if (locationItem && locationItem !== draggedElement) {
+                const rect = locationItem.getBoundingClientRect();
                 const midY = rect.top + rect.height / 2;
 
                 if (e.clientY < midY) {
-                    this.style.borderTop = '3px solid #3b82f6';
-                    this.style.borderBottom = '';
+                    locationItem.style.borderTop = '3px solid #3b82f6';
+                    locationItem.style.borderBottom = '';
                 } else {
-                    this.style.borderBottom = '3px solid #3b82f6';
-                    this.style.borderTop = '';
+                    locationItem.style.borderBottom = '3px solid #3b82f6';
+                    locationItem.style.borderTop = '';
                 }
             }
 
@@ -701,39 +721,60 @@
                 e.stopPropagation();
             }
 
-            if (draggedElement !== this) {
-                const rect = this.getBoundingClientRect();
+            e.preventDefault();
+
+            // 獲取目標位置
+            const targetItem = e.target.closest('.location-item');
+            const targetContainer = e.target.closest('.locations-container');
+            
+            if (!targetContainer) return false;
+
+            // 獲取目標時段
+            const targetTimeSlot = targetContainer.id.replace('locationsList-', '');
+            
+            // 更新被拖拉元素的時段屬性
+            draggedElement.setAttribute('data-time-slot', targetTimeSlot);
+
+            if (targetItem && targetItem !== draggedElement) {
+                // 拖曳到另一個地點上
+                const rect = targetItem.getBoundingClientRect();
                 const midY = rect.top + rect.height / 2;
-                
-                // 獲取目標時段容器
-                const targetTimeSlot = this.getAttribute('data-time-slot');
-                const targetContainer = this.closest('.locations-container');
-                
-                // 更新被拖拉元素的時段屬性
-                draggedElement.setAttribute('data-time-slot', targetTimeSlot);
 
                 if (e.clientY < midY) {
-                    targetContainer.insertBefore(draggedElement, this);
+                    targetContainer.insertBefore(draggedElement, targetItem);
                 } else {
-                    targetContainer.insertBefore(draggedElement, this.nextSibling);
+                    targetContainer.insertBefore(draggedElement, targetItem.nextSibling);
                 }
-
-                // 更新順序到伺服器
-                updateLocationOrder();
+            } else if (!targetItem) {
+                // 拖曳到空容器
+                targetContainer.appendChild(draggedElement);
             }
+
+            // 清除拖曳效果
+            clearDragEffects();
+            
+            // 更新順序到伺服器
+            updateLocationOrder();
 
             return false;
         }
 
-        function handleDragEnd(e) {
-            this.style.opacity = '';
-
+        function clearDragEffects() {
             // 清除所有視覺提示
             document.querySelectorAll('.location-item').forEach(item => {
                 item.style.borderTop = '';
                 item.style.borderBottom = '';
             });
+            
+            // 清除容器拖曳效果
+            document.querySelectorAll('.locations-container').forEach(container => {
+                container.classList.remove('drag-over');
+            });
+        }
 
+        function handleDragEnd(e) {
+            this.style.opacity = '';
+            clearDragEffects();
             draggedElement = null;
         }
 
