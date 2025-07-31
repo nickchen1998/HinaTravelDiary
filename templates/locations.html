@@ -47,7 +47,7 @@
                     所有景點的地理位置一覽
                 </p>
             </div>
-            
+
             <div class="card bg-base-100 shadow-xl mb-8">
                 <div class="card-body p-0">
                     <div id="map" style="height: 400px; width: 100%; border-radius: 1rem;"></div>
@@ -66,7 +66,7 @@
             <p class="text-lg text-base-content opacity-70">
                 探索這個行程的所有精彩景點
             </p>
-            
+
             <!-- 新增地點按鈕 -->
             <div class="mt-6">
                 <button onclick="openCreateLocationModal()" class="btn btn-primary">
@@ -79,8 +79,8 @@
         {% if locations %}
             <div id="locationsList" class="space-y-6">
                 {% for location in locations %}
-                    <div class="location-item card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-move" 
-                         data-location-id="{{ location.id }}" 
+                    <div class="location-item card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-move"
+                         data-location-id="{{ location.id }}"
                          draggable="true">
                         <div class="card-body">
                             <!-- 桌面版：左右佈局，手機版：上下佈局 -->
@@ -102,11 +102,13 @@
                                         {{ location.name }}
                                     </h3>
 
-{#                                    {% if location.description %}#}
-                                        <p class="text-base-content opacity-80 mb-4 leading-relaxed">
+                                    <p class="text-base-content opacity-80 mb-4 leading-relaxed">
+                                        {% if location.description %}
+                                            尚無描述
+                                        {% else %}
                                             {{ location.description }}
-                                        </p>
-{#                                    {% endif %}#}
+                                        {% endif %}
+                                    </p>
 
                                     <!-- 地點資訊 -->
                                     <div class="mb-4">
@@ -117,7 +119,7 @@
                                             </div>
                                         {% endif %}
                                     </div>
-                                    
+
                                     <div class="flex flex-wrap items-center gap-4 mb-4">
                                         {% if location.rating %}
                                             <div class="badge badge-warning badge-outline">
@@ -133,7 +135,7 @@
                                             </div>
                                         {% endif %}
                                     </div>
-                                    
+
                                     <div class="flex flex-wrap items-center gap-4 mb-4">
                                         {% if location.google_maps_url %}
                                             <a href="{{ location.google_maps_url }}"
@@ -144,7 +146,7 @@
                                             </a>
                                         {% endif %}
                                     </div>
-                                    
+
                                     <!-- 時間資訊 -->
                                     <div class="flex flex-wrap items-center gap-4 mb-4">
                                         {% if location.arrived_hour is not None and location.arrived_minute is not None %}
@@ -160,15 +162,15 @@
                                             </div>
                                         {% endif %}
                                     </div>
-                                    
+
                                     <!-- 操作按鈕 -->
                                     <div class="flex flex-wrap gap-2">
-                                        <button onclick="openEditLocationModal({{ location.id }}, '{{ location.name|escapejs }}', {{ location.arrived_hour|default:'null' }}, {{ location.arrived_minute|default:'null' }}, {{ location.departure_hour|default:'null' }}, {{ location.departure_minute|default:'null' }})" 
+                                        <button onclick="openEditLocationModal({{ location.id }}, '{{ location.name|escapejs }}', {{ location.arrived_hour|default:'null' }}, {{ location.arrived_minute|default:'null' }}, {{ location.departure_hour|default:'null' }}, {{ location.departure_minute|default:'null' }})"
                                                 class="btn btn-sm btn-outline btn-secondary">
                                             <i class="fas fa-edit mr-1"></i>
                                             編輯
                                         </button>
-                                        <button onclick="deleteLocation({{ location.id }})" 
+                                        <button onclick="deleteLocation({{ location.id }})"
                                                 class="btn btn-sm btn-outline btn-error">
                                             <i class="fas fa-trash mr-1"></i>
                                             刪除
@@ -198,7 +200,7 @@
                                                         {% endfor %}
                                                     </div>
                                                 </div>
-                                                
+
                                                 <!-- 控制按鈕 - 只在多張圖片時顯示 -->
                                                 {% if location.locationphoto_set.all|length > 1 %}
                                                     <button class="carousel-btn carousel-prev absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-70 hover:bg-opacity-90 text-white rounded-full w-10 h-10 flex items-center justify-center transition-all duration-200 shadow-lg"
@@ -211,7 +213,7 @@
                                                             type="button">
                                                         <i class="fas fa-chevron-right text-sm"></i>
                                                     </button>
-                                                    
+
                                                     <!-- 指示點 -->
                                                     <div class="carousel-indicators absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2">
                                                         {% for photo in location.locationphoto_set.all %}
@@ -266,7 +268,7 @@
                         throw new Error('無法載入地圖資料');
                     }
                     mapData = await response.json();
-                    
+
                     if (mapData.api_key) {
                         loadGoogleMapsAPI(mapData.api_key);
                     } else {
@@ -281,7 +283,7 @@
             // 動態載入 Google Maps API
             function loadGoogleMapsAPI(apiKey) {
                 if (googleMapsLoaded) return;
-                
+
                 const script = document.createElement('script');
                 script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap`;
                 script.async = true;
@@ -297,8 +299,8 @@
                 const bgColor = type === 'error' ? 'bg-error/10' : 'bg-warning/10';
                 const textColor = type === 'error' ? 'text-error' : 'text-warning';
                 const icon = type === 'error' ? 'fa-exclamation-triangle' : 'fa-exclamation-triangle';
-                
-                document.getElementById('map').innerHTML = 
+
+                document.getElementById('map').innerHTML =
                     `<div class="flex items-center justify-center h-full ${bgColor} rounded-xl">` +
                     '<div class="text-center">' +
                     `<i class="fas ${icon} text-4xl ${textColor} mb-4"></i>` +
@@ -336,7 +338,7 @@
                         {
                             featureType: "poi",
                             elementType: "labels",
-                            stylers: [{ visibility: "on" }]
+                            stylers: [{visibility: "on"}]
                         }
                     ]
                 });
@@ -368,7 +370,7 @@
                 // 為每個景點添加標記
                 locations.forEach((location, index) => {
                     const marker = new google.maps.Marker({
-                        position: { lat: location.lat, lng: location.lng },
+                        position: {lat: location.lat, lng: location.lng},
                         map: map,
                         title: location.name,
                         label: {
@@ -442,17 +444,17 @@
             }
 
             // 錯誤處理
-            window.gm_authFailure = function() {
+            window.gm_authFailure = function () {
                 showError('error', 'Google Maps API 認證失敗', '請檢查 API 金鑰設定');
             };
 
             // 頁面載入時開始載入地圖資料
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 loadMapData();
             });
         </script>
     {% endif %}
-    
+
     <!-- 建立地點模態對話框 -->
     <div id="createLocationModal" class="modal">
         <div class="modal-box w-11/12 max-w-2xl">
@@ -462,45 +464,51 @@
                     <i class="fas fa-plus text-primary mr-2"></i>
                     新增地點
                 </h3>
-                
+
                 <!-- 必填欄位 -->
                 <div class="form-control w-full mb-4">
                     <label class="label">
                         <span class="label-text">地點名稱 <span class="text-error">*</span></span>
                     </label>
-                    <input type="text" name="name" placeholder="請輸入地點名稱" class="input input-bordered w-full" required>
+                    <input type="text" name="name" placeholder="請輸入地點名稱" class="input input-bordered w-full"
+                           required>
                 </div>
-                
+
                 <div class="form-control w-full mb-4">
                     <label class="label">
                         <span class="label-text">地址 <span class="text-error">*</span></span>
                     </label>
-                    <input type="text" name="address" placeholder="請輸入地址" class="input input-bordered w-full" required>
+                    <input type="text" name="address" placeholder="請輸入地址" class="input input-bordered w-full"
+                           required>
                 </div>
-                
+
                 <div class="form-control w-full mb-4">
                     <label class="label">
                         <span class="label-text">Google Maps 網址 <span class="text-error">*</span></span>
                     </label>
-                    <input type="url" name="google_maps_url" placeholder="請貼上 Google Maps 網址" class="input input-bordered w-full" required>
+                    <input type="url" name="google_maps_url" placeholder="請貼上 Google Maps 網址"
+                           class="input input-bordered w-full" required>
                 </div>
-                
+
                 <!-- 選填欄位 -->
                 <div class="form-control w-full mb-4">
                     <label class="label">
                         <span class="label-text">地點描述</span>
                     </label>
-                    <textarea name="description" class="textarea textarea-bordered" placeholder="請輸入地點描述" rows="2"></textarea>
+                    <textarea name="description" class="textarea textarea-bordered" placeholder="請輸入地點描述"
+                              rows="2"></textarea>
                 </div>
-                
+
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="form-control">
                         <label class="label">
                             <span class="label-text">到達時間</span>
                         </label>
                         <div class="flex gap-2">
-                            <input type="number" name="arrived_hour" min="0" max="23" placeholder="時" class="input input-bordered w-20">
-                            <input type="number" name="arrived_minute" min="0" max="59" placeholder="分" class="input input-bordered w-20">
+                            <input type="number" name="arrived_hour" min="0" max="23" placeholder="時"
+                                   class="input input-bordered w-20">
+                            <input type="number" name="arrived_minute" min="0" max="59" placeholder="分"
+                                   class="input input-bordered w-20">
                         </div>
                     </div>
                     <div class="form-control">
@@ -508,12 +516,14 @@
                             <span class="label-text">離開時間</span>
                         </label>
                         <div class="flex gap-2">
-                            <input type="number" name="departure_hour" min="0" max="23" placeholder="時" class="input input-bordered w-20">
-                            <input type="number" name="departure_minute" min="0" max="59" placeholder="分" class="input input-bordered w-20">
+                            <input type="number" name="departure_hour" min="0" max="23" placeholder="時"
+                                   class="input input-bordered w-20">
+                            <input type="number" name="departure_minute" min="0" max="59" placeholder="分"
+                                   class="input input-bordered w-20">
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- 照片上傳（最多3張） -->
                 <div class="form-control w-full mb-4">
                     <label class="label">
@@ -521,20 +531,26 @@
                     </label>
                     <div class="space-y-2">
                         <div>
-                            <input type="file" name="image_0" class="file-input file-input-bordered file-input-sm w-full" accept="image/*">
-                            <input type="text" name="caption_0" placeholder="照片說明（選填）" class="input input-bordered input-sm w-full mt-1">
+                            <input type="file" name="image_0"
+                                   class="file-input file-input-bordered file-input-sm w-full" accept="image/*">
+                            <input type="text" name="caption_0" placeholder="照片說明（選填）"
+                                   class="input input-bordered input-sm w-full mt-1">
                         </div>
                         <div>
-                            <input type="file" name="image_1" class="file-input file-input-bordered file-input-sm w-full" accept="image/*">
-                            <input type="text" name="caption_1" placeholder="照片說明（選填）" class="input input-bordered input-sm w-full mt-1">
+                            <input type="file" name="image_1"
+                                   class="file-input file-input-bordered file-input-sm w-full" accept="image/*">
+                            <input type="text" name="caption_1" placeholder="照片說明（選填）"
+                                   class="input input-bordered input-sm w-full mt-1">
                         </div>
                         <div>
-                            <input type="file" name="image_2" class="file-input file-input-bordered file-input-sm w-full" accept="image/*">
-                            <input type="text" name="caption_2" placeholder="照片說明（選填）" class="input input-bordered input-sm w-full mt-1">
+                            <input type="file" name="image_2"
+                                   class="file-input file-input-bordered file-input-sm w-full" accept="image/*">
+                            <input type="text" name="caption_2" placeholder="照片說明（選填）"
+                                   class="input input-bordered input-sm w-full mt-1">
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="modal-action">
                     <button type="button" class="btn" onclick="closeCreateLocationModal()">取消</button>
                     <button type="submit" class="btn btn-primary">建立地點</button>
@@ -542,39 +558,41 @@
             </form>
         </div>
     </div>
-    
+
     <!-- 編輯地點模態對話框 -->
     <div id="editLocationModal" class="modal">
         <div class="modal-box w-11/12 max-w-2xl">
             <form id="editLocationForm" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" id="editLocationId" name="location_id">
-                
+
                 <h3 class="font-bold text-lg mb-4">
                     <i class="fas fa-edit text-secondary mr-2"></i>
                     編輯地點時間
                 </h3>
-                
+
                 <div class="alert alert-info mb-4">
                     <i class="fas fa-info-circle mr-2"></i>
                     編輯地點時只能修改到達和離開時間，其他資訊請於後台管理介面修改。
                 </div>
-                
+
                 <div class="form-control w-full mb-4">
                     <label class="label">
                         <span class="label-text">地點名稱</span>
                     </label>
                     <input type="text" id="editLocationName" class="input input-bordered w-full" disabled>
                 </div>
-                
+
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="form-control">
                         <label class="label">
                             <span class="label-text">到達時間</span>
                         </label>
                         <div class="flex gap-2">
-                            <input type="number" id="editArrivedHour" name="arrived_hour" min="0" max="23" placeholder="時" class="input input-bordered w-20">
-                            <input type="number" id="editArrivedMinute" name="arrived_minute" min="0" max="59" placeholder="分" class="input input-bordered w-20">
+                            <input type="number" id="editArrivedHour" name="arrived_hour" min="0" max="23"
+                                   placeholder="時" class="input input-bordered w-20">
+                            <input type="number" id="editArrivedMinute" name="arrived_minute" min="0" max="59"
+                                   placeholder="分" class="input input-bordered w-20">
                         </div>
                     </div>
                     <div class="form-control">
@@ -582,12 +600,14 @@
                             <span class="label-text">離開時間</span>
                         </label>
                         <div class="flex gap-2">
-                            <input type="number" id="editDepartureHour" name="departure_hour" min="0" max="23" placeholder="時" class="input input-bordered w-20">
-                            <input type="number" id="editDepartureMinute" name="departure_minute" min="0" max="59" placeholder="分" class="input input-bordered w-20">
+                            <input type="number" id="editDepartureHour" name="departure_hour" min="0" max="23"
+                                   placeholder="時" class="input input-bordered w-20">
+                            <input type="number" id="editDepartureMinute" name="departure_minute" min="0" max="59"
+                                   placeholder="分" class="input input-bordered w-20">
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- 新增照片（如果還有額度） -->
                 <div class="form-control w-full mb-4">
                     <label class="label">
@@ -595,12 +615,14 @@
                     </label>
                     <div class="space-y-2">
                         <div>
-                            <input type="file" name="image_0" class="file-input file-input-bordered file-input-sm w-full" accept="image/*">
-                            <input type="text" name="caption_0" placeholder="照片說明（選填）" class="input input-bordered input-sm w-full mt-1">
+                            <input type="file" name="image_0"
+                                   class="file-input file-input-bordered file-input-sm w-full" accept="image/*">
+                            <input type="text" name="caption_0" placeholder="照片說明（選填）"
+                                   class="input input-bordered input-sm w-full mt-1">
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="modal-action">
                     <button type="button" class="btn" onclick="closeEditLocationModal()">取消</button>
                     <button type="submit" class="btn btn-secondary">更新時間</button>
@@ -608,40 +630,40 @@
             </form>
         </div>
     </div>
-    
+
     <script>
         // 新增地點相關函數
         function openCreateLocationModal() {
             document.getElementById('createLocationModal').classList.add('modal-open');
         }
-        
+
         function closeCreateLocationModal() {
             document.getElementById('createLocationModal').classList.remove('modal-open');
             document.getElementById('createLocationForm').reset();
         }
-        
+
         function openEditLocationModal(locationId, locationName, arrivedHour, arrivedMinute, departureHour, departureMinute) {
             document.getElementById('editLocationId').value = locationId;
             document.getElementById('editLocationName').value = locationName;
-            
+
             // 設定時間值
             document.getElementById('editArrivedHour').value = arrivedHour !== null ? arrivedHour : '';
             document.getElementById('editArrivedMinute').value = arrivedMinute !== null ? arrivedMinute : '';
             document.getElementById('editDepartureHour').value = departureHour !== null ? departureHour : '';
             document.getElementById('editDepartureMinute').value = departureMinute !== null ? departureMinute : '';
-            
+
             // 設定表單 action
             const form = document.getElementById('editLocationForm');
             form.action = `/itineraries/{{ itinerary.id }}/locations/${locationId}/edit/`;
-            
+
             document.getElementById('editLocationModal').classList.add('modal-open');
         }
-        
+
         function closeEditLocationModal() {
             document.getElementById('editLocationModal').classList.remove('modal-open');
             document.getElementById('editLocationForm').reset();
         }
-        
+
         // 刪除地點
         function deleteLocation(locationId) {
             if (confirm('確定要刪除這個地點嗎？')) {
@@ -651,28 +673,28 @@
                         'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                     }
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert(data.error || '刪除失敗');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('刪除地點時發生錯誤');
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.error || '刪除失敗');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('刪除地點時發生錯誤');
+                    });
             }
         }
-        
+
         // 拖拉排序功能
         let draggedElement = null;
-        
+
         function initializeDragAndDrop() {
             const locationsList = document.getElementById('locationsList');
             const locationItems = document.querySelectorAll('.location-item');
-            
+
             locationItems.forEach(item => {
                 item.addEventListener('dragstart', handleDragStart);
                 item.addEventListener('dragover', handleDragOver);
@@ -680,28 +702,28 @@
                 item.addEventListener('dragend', handleDragEnd);
             });
         }
-        
+
         function handleDragStart(e) {
             draggedElement = this;
             this.style.opacity = '0.5';
-            
+
             // 設定拖拉效果
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/html', this.outerHTML);
         }
-        
+
         function handleDragOver(e) {
             if (e.preventDefault) {
                 e.preventDefault();
             }
-            
+
             e.dataTransfer.dropEffect = 'move';
-            
+
             // 添加視覺提示
             if (this !== draggedElement) {
                 const rect = this.getBoundingClientRect();
                 const midY = rect.top + rect.height / 2;
-                
+
                 if (e.clientY < midY) {
                     this.style.borderTop = '3px solid #3b82f6';
                     this.style.borderBottom = '';
@@ -710,51 +732,51 @@
                     this.style.borderTop = '';
                 }
             }
-            
+
             return false;
         }
-        
+
         function handleDrop(e) {
             if (e.stopPropagation) {
                 e.stopPropagation();
             }
-            
+
             if (draggedElement !== this) {
                 const rect = this.getBoundingClientRect();
                 const midY = rect.top + rect.height / 2;
                 const locationsList = document.getElementById('locationsList');
-                
+
                 if (e.clientY < midY) {
                     locationsList.insertBefore(draggedElement, this);
                 } else {
                     locationsList.insertBefore(draggedElement, this.nextSibling);
                 }
-                
+
                 // 更新順序到伺服器
                 updateLocationOrder();
             }
-            
+
             return false;
         }
-        
+
         function handleDragEnd(e) {
             this.style.opacity = '';
-            
+
             // 清除所有視覺提示
             document.querySelectorAll('.location-item').forEach(item => {
                 item.style.borderTop = '';
                 item.style.borderBottom = '';
             });
-            
+
             draggedElement = null;
         }
-        
+
         function updateLocationOrder() {
             const locationItems = document.querySelectorAll('.location-item');
-            const locationIds = Array.from(locationItems).map(item => 
+            const locationIds = Array.from(locationItems).map(item =>
                 parseInt(item.getAttribute('data-location-id'))
             );
-            
+
             fetch(`/itineraries/{{ itinerary.id }}/locations/reorder/`, {
                 method: 'POST',
                 headers: {
@@ -765,39 +787,39 @@
                     location_ids: locationIds
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // 更新順序標籤
-                    locationItems.forEach((item, index) => {
-                        const badge = item.querySelector('.badge');
-                        if (badge) {
-                            const icon = badge.querySelector('i');
-                            badge.innerHTML = '';
-                            badge.appendChild(icon);
-                            badge.appendChild(document.createTextNode(` ${index + 1}`));
-                        }
-                    });
-                    
-                    // 顯示成功訊息（可選）
-                    console.log('地點順序已更新');
-                } else {
-                    alert(data.error || '更新順序失敗');
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 更新順序標籤
+                        locationItems.forEach((item, index) => {
+                            const badge = item.querySelector('.badge');
+                            if (badge) {
+                                const icon = badge.querySelector('i');
+                                badge.innerHTML = '';
+                                badge.appendChild(icon);
+                                badge.appendChild(document.createTextNode(` ${index + 1}`));
+                            }
+                        });
+
+                        // 顯示成功訊息（可選）
+                        console.log('地點順序已更新');
+                    } else {
+                        alert(data.error || '更新順序失敗');
+                        location.reload(); // 重新載入頁面以恢復原始順序
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('更新順序時發生錯誤');
                     location.reload(); // 重新載入頁面以恢復原始順序
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('更新順序時發生錯誤');
-                location.reload(); // 重新載入頁面以恢復原始順序
-            });
+                });
         }
-        
+
         // 表單提交處理
-        document.getElementById('createLocationForm').addEventListener('submit', function(e) {
+        document.getElementById('createLocationForm').addEventListener('submit', function (e) {
             e.preventDefault();
             const formData = new FormData(this);
-            
+
             fetch(`/itineraries/{{ itinerary.id }}/locations/create/`, {
                 method: 'POST',
                 body: formData,
@@ -805,25 +827,25 @@
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert(data.error || '建立地點失敗');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('建立地點時發生錯誤');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.error || '建立地點失敗');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('建立地點時發生錯誤');
+                });
         });
-        
-        document.getElementById('editLocationForm').addEventListener('submit', function(e) {
+
+        document.getElementById('editLocationForm').addEventListener('submit', function (e) {
             e.preventDefault();
             const formData = new FormData(this);
             const locationId = document.getElementById('editLocationId').value;
-            
+
             fetch(`/itineraries/{{ itinerary.id }}/locations/${locationId}/edit/`, {
                 method: 'POST',
                 body: formData,
@@ -831,91 +853,91 @@
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert(data.error || '更新地點失敗');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('更新地點時發生錯誤');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.error || '更新地點失敗');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('更新地點時發生錯誤');
+                });
         });
-        
+
         // 點擊模態背景關閉
-        document.getElementById('createLocationModal').addEventListener('click', function(e) {
+        document.getElementById('createLocationModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeCreateLocationModal();
             }
         });
-        
-        document.getElementById('editLocationModal').addEventListener('click', function(e) {
+
+        document.getElementById('editLocationModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeEditLocationModal();
             }
         });
-        
+
         // 圖片輪播功能
         const carouselStates = {};
-        
+
         function initializeCarousels() {
             document.querySelectorAll('.photo-carousel').forEach(carousel => {
                 const locationId = carousel.getAttribute('data-location-id');
                 const slides = carousel.querySelectorAll('.carousel-slide');
-                
+
                 carouselStates[locationId] = {
                     currentSlide: 0,
                     totalSlides: slides.length,
                     carousel: carousel
                 };
-                
+
                 // 初始化指示點狀態
                 updateIndicators(locationId);
             });
         }
-        
+
         function previousSlide(locationId) {
             const state = carouselStates[locationId];
             if (!state) return;
-            
+
             state.currentSlide = state.currentSlide > 0 ? state.currentSlide - 1 : state.totalSlides - 1;
             updateCarousel(locationId);
         }
-        
+
         function nextSlide(locationId) {
             const state = carouselStates[locationId];
             if (!state) return;
-            
+
             state.currentSlide = state.currentSlide < state.totalSlides - 1 ? state.currentSlide + 1 : 0;
             updateCarousel(locationId);
         }
-        
+
         function goToSlide(locationId, slideIndex) {
             const state = carouselStates[locationId];
             if (!state) return;
-            
+
             state.currentSlide = slideIndex;
             updateCarousel(locationId);
         }
-        
+
         function updateCarousel(locationId) {
             const state = carouselStates[locationId];
             if (!state) return;
-            
+
             const track = state.carousel.querySelector('.carousel-track');
             const translateX = -state.currentSlide * 100;
             track.style.transform = `translateX(${translateX}%)`;
-            
+
             updateIndicators(locationId);
         }
-        
+
         function updateIndicators(locationId) {
             const state = carouselStates[locationId];
             if (!state) return;
-            
+
             const indicators = state.carousel.querySelectorAll('.indicator-dot');
             indicators.forEach((dot, index) => {
                 if (index === state.currentSlide) {
@@ -927,7 +949,7 @@
                 }
             });
         }
-        
+
         // 鍵盤導航支援
         function handleKeyboardNavigation(e, locationId) {
             if (e.key === 'ArrowLeft') {
@@ -938,7 +960,7 @@
                 nextSlide(locationId);
             }
         }
-        
+
         // 觸控支援
         function initializeTouchSupport() {
             document.querySelectorAll('.photo-carousel').forEach(carousel => {
@@ -946,24 +968,24 @@
                 let startX = 0;
                 let currentX = 0;
                 let isDragging = false;
-                
+
                 carousel.addEventListener('touchstart', (e) => {
                     startX = e.touches[0].clientX;
                     isDragging = true;
                 });
-                
+
                 carousel.addEventListener('touchmove', (e) => {
                     if (!isDragging) return;
                     currentX = e.touches[0].clientX;
                 });
-                
+
                 carousel.addEventListener('touchend', (e) => {
                     if (!isDragging) return;
                     isDragging = false;
-                    
+
                     const deltaX = startX - currentX;
                     const threshold = 50; // 最小滑動距離
-                    
+
                     if (Math.abs(deltaX) > threshold) {
                         if (deltaX > 0) {
                             nextSlide(parseInt(locationId));
@@ -974,9 +996,9 @@
                 });
             });
         }
-        
+
         // 初始化拖拉排序功能
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             {% if locations %}
                 initializeDragAndDrop();
                 initializeCarousels();
@@ -984,127 +1006,127 @@
             {% endif %}
         });
     </script>
-    
+
     <!-- 拖拉排序和輪播的CSS樣式 -->
     <style>
         /* 拖拉排序樣式 */
         .location-item {
             transition: all 0.3s ease;
         }
-        
+
         .location-item:hover .drag-handle {
             color: #6b7280 !important;
         }
-        
+
         .location-item.dragging {
             opacity: 0.5;
             transform: rotate(2deg);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
         }
-        
+
         .location-item.drag-over-top {
             border-top: 3px solid #3b82f6;
         }
-        
+
         .location-item.drag-over-bottom {
             border-bottom: 3px solid #3b82f6;
         }
-        
+
         .drag-handle {
             transition: color 0.2s ease;
         }
-        
+
         .drag-handle:hover {
             color: #374151 !important;
         }
-        
+
         .drag-handle:active {
             color: #1f2937 !important;
         }
-        
+
         /* 輪播樣式 */
         .photo-carousel {
             user-select: none;
         }
-        
+
         .carousel-container {
             position: relative;
         }
-        
+
         .carousel-track {
             display: flex;
         }
-        
+
         .carousel-slide {
             position: relative;
             flex-shrink: 0;
         }
-        
+
         .carousel-btn {
             z-index: 10;
             opacity: 0.7;
             transition: all 0.3s ease;
         }
-        
+
         .photo-carousel:hover .carousel-btn {
             opacity: 1;
         }
-        
+
         .carousel-btn:hover {
             transform: translateY(-50%) scale(1.1);
         }
-        
+
         .carousel-indicators {
             z-index: 10;
         }
-        
+
         .indicator-dot.active {
             background-color: rgba(255, 255, 255, 1) !important;
         }
-        
+
         /* 響應式調整 */
         @media (max-width: 1023px) {
             /* 手機版和平板版 */
             .photo-carousel {
                 width: 100% !important;
             }
-            
+
             .carousel-slide img {
                 height: 12rem; /* h-48 */
             }
         }
-        
+
         @media (min-width: 1024px) {
             /* 桌面版 */
             .carousel-slide img {
                 height: 14rem; /* h-56 */
             }
         }
-        
+
         /* 改善觸控設備的拖拉體驗 */
         @media (pointer: coarse) {
             .drag-handle {
                 font-size: 1.25rem;
                 padding: 0.5rem;
             }
-            
+
             .carousel-btn {
                 opacity: 1 !important;
                 width: 2.5rem;
                 height: 2.5rem;
             }
-            
+
             .indicator-dot {
                 width: 0.75rem;
                 height: 0.75rem;
             }
         }
-        
+
         /* 防止在拖拉地點時觸發輪播 */
         .location-item[draggable="true"] .photo-carousel {
             pointer-events: none;
         }
-        
+
         .location-item:not([draggable="true"]) .photo-carousel {
             pointer-events: auto;
         }
