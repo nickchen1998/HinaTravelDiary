@@ -20,7 +20,7 @@
                     <i class="fas fa-map-marked-alt mr-3"></i>
                     {{ itinerary.title }}
                 </h1>
-                <p class="py-6">{{ itinerary.description }}</p>
+{#                <p class="py-6">{{ itinerary.description }}</p>#}
                 <div class="flex justify-center items-center gap-4 text-sm">
                     <div class="badge badge-primary badge-outline">
                         <i class="fas fa-route mr-1"></i>
@@ -753,6 +753,10 @@
             // 清除拖曳效果
             clearDragEffects();
             
+            // 立即更新 UI
+            updateTimeSlotOrderNumbers();
+            updateTimeSlotCounts();
+            
             // 更新順序到伺服器
             updateLocationOrder();
 
@@ -778,6 +782,49 @@
             draggedElement = null;
         }
 
+        function updateTimeSlotOrderNumbers() {
+            // 更新全局順序標籤（按時段順序：上午 -> 下午 -> 晚上）
+            let globalOrder = 1;
+            
+            ['morning', 'afternoon', 'evening'].forEach(timeSlot => {
+                const container = document.getElementById(`locationsList-${timeSlot}`);
+                if (container) {
+                    const items = container.querySelectorAll('.location-item');
+                    items.forEach((item) => {
+                        const badge = item.querySelector('.badge-primary');
+                        if (badge) {
+                            const icon = badge.querySelector('i');
+                            badge.innerHTML = '';
+                            badge.appendChild(icon);
+                            badge.appendChild(document.createTextNode(` ${globalOrder}`));
+                        }
+                        globalOrder++;
+                    });
+                }
+            });
+        }
+
+        function updateTimeSlotCounts() {
+            // 更新每個時段的地點計數和空容器狀態
+            ['morning', 'afternoon', 'evening'].forEach(timeSlot => {
+                const container = document.getElementById(`locationsList-${timeSlot}`);
+                const timeSlotSection = container.closest('.time-slot-section');
+                const countElement = timeSlotSection.querySelector('.text-sm.text-base-content.opacity-60');
+                const items = container.querySelectorAll('.location-item');
+                
+                if (countElement) {
+                    countElement.textContent = `共 ${items.length} 個地點`;
+                }
+                
+                // 更新空容器狀態
+                if (items.length === 0) {
+                    container.classList.add('empty-container');
+                } else {
+                    container.classList.remove('empty-container');
+                }
+            });
+        }
+
         function updateLocationOrder() {
             const locationItems = document.querySelectorAll('.location-item');
             const locationData = Array.from(locationItems).map((item, index) => ({
@@ -800,21 +847,10 @@
                 .then(data => {
                     if (data.success) {
                         // 更新每個時段內的順序標籤
-                        ['morning', 'afternoon', 'evening'].forEach(timeSlot => {
-                            const container = document.getElementById(`locationsList-${timeSlot}`);
-                            if (container) {
-                                const items = container.querySelectorAll('.location-item');
-                                items.forEach((item, index) => {
-                                    const badge = item.querySelector('.badge');
-                                    if (badge) {
-                                        const icon = badge.querySelector('i');
-                                        badge.innerHTML = '';
-                                        badge.appendChild(icon);
-                                        badge.appendChild(document.createTextNode(` ${index + 1}`));
-                                    }
-                                });
-                            }
-                        });
+                        updateTimeSlotOrderNumbers();
+
+                        // 更新時段計數
+                        updateTimeSlotCounts();
 
                         // 顯示成功訊息（可選）
                         console.log('地點順序已更新');
@@ -900,6 +936,7 @@
         document.addEventListener('DOMContentLoaded', function () {
             {% if locations %}
                 initializeDragAndDrop();
+                updateTimeSlotCounts(); // 初始化時段狀態
             {% endif %}
         });
     </script>
@@ -983,7 +1020,7 @@
         }
         
         /* 空時段的提示 */
-        .locations-container:empty::after {
+        .locations-container.empty-container::after {
             content: "拖拉地點到此時段";
             display: block;
             text-align: center;
