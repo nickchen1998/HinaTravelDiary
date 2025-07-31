@@ -2,155 +2,151 @@
 
 {% block content %}
     <!-- 主要內容區塊 -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-screen">
-        <!-- 歡迎區塊 -->
-        <section class="bg-gradient-to-r from-pink-100 to-purple-100 py-16 lg:col-span-1">
-            <div class="container mx-auto px-4 h-full flex items-center justify-center">
-                <div class="text-center">
-                    <h1 class="text-4xl lg:text-3xl font-bold text-primary mb-6">
-                        <i class="fas fa-map-marked-alt mr-3"></i>
-                        旅行日記 Travel Diary
-                    </h1>
-                    <p class="text-base lg:text-sm mb-8">
-                        歡迎來到旅行日記！在這裡，我會分享我的精彩旅程，
-                        記錄下每一個美好的瞬間和難忘的回憶。
-                    </p>
-                </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 py-8">
+        <!-- 左側：精選旅程 -->
+        <section>
+            <div class="text-center mb-8">
+                <h2 class="text-4xl font-bold text-base-content mb-4">
+                    <i class="fas fa-star text-yellow-500 mr-2"></i>
+                    精選旅程
+                </h2>
             </div>
-        </section>
 
-        <!-- 精選內容 -->
-        <section class="py-16 lg:col-span-2">
-            <div class="container mx-auto px-4 h-full flex flex-col justify-center">
-
-                <div class="text-center mb-8">
-                    <h2 class="text-4xl font-bold text-base-content mb-4">
-                        <i class="fas fa-star text-yellow-500 mr-2"></i>
-                        精選旅程
-                    </h2>
-                </div>
-
-                <div class="flex flex-col gap-6">
-                    {% for journey in highlighted_journeys|slice:":3" %}
-                        <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-105"
-                             onclick="window.location.href='/journeys/{{ journey.id }}/itineraries'">
-                            <div class="card-body">
-                                <div class="flex items-start gap-4">
-                                    <!-- 照片區塊 -->
-                                    <div class="flex-shrink-0">
-                                        {% if journey.journeyphoto %}
-                                            <div class="avatar">
-                                                <div class="w-24 h-24 rounded-lg">
-                                                    <img src="{{ journey.journeyphoto.image.url }}"
-                                                         alt="{{ journey.journeyphoto.caption|default:journey.title }}"
-                                                         class="w-full h-full object-cover">
-                                                </div>
+            <div class="flex flex-col gap-6">
+                {% for journey in highlighted_journeys %}
+                    <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-105"
+                         onclick="window.location.href='/journeys/{{ journey.id }}/itineraries'">
+                        <div class="card-body">
+                            <div class="flex items-start gap-4">
+                                <!-- 照片區塊 -->
+                                <div class="flex-shrink-0">
+                                    {% if journey.journeyphoto %}
+                                        <div class="avatar">
+                                            <div class="w-24 h-24 rounded-lg">
+                                                <img src="{{ journey.journeyphoto.image.url }}"
+                                                     alt="{{ journey.journeyphoto.caption|default:journey.title }}"
+                                                     class="w-full h-full object-cover">
                                             </div>
-                                        {% else %}
-                                            <div class="avatar placeholder">
-                                                <div class="w-24 h-24 bg-neutral text-neutral-content rounded-lg">
-                                                    <i class="fas fa-image text-2xl"></i>
-                                                </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="avatar placeholder">
+                                            <div class="w-24 h-24 bg-neutral text-neutral-content rounded-lg">
+                                                <i class="fas fa-image text-2xl"></i>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- 內容區塊 -->
+                                <div class="flex-1">
+                                    <div class="mb-2">
+                                        <h2 class="card-title">
+                                            {{ journey.title }}
+                                        </h2>
+                                    </div>
+
+                                    <!-- 國家和時間資訊 -->
+                                    <div class="flex items-center gap-4 mb-3">
+                                        <div class="badge badge-primary badge-outline">
+                                            <i class="fas fa-map-marker-alt mr-1"></i>
+                                            {{ journey.country.name }}
+                                        </div>
+                                        {% if journey.city %}
+                                            <div class="badge badge-primary badge-outline">
+                                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                                {{ journey.city.name }}
                                             </div>
                                         {% endif %}
                                     </div>
-
-                                    <!-- 內容區塊 -->
-                                    <div class="flex-1">
-                                        <div class="mb-2">
-                                            <h2 class="card-title">
-                                                {{ journey.title }}
-                                            </h2>
+                                    <div class="flex items-center gap-4 mb-3">
+                                        <div class="text-xs text-base-content opacity-60">
+                                            <i class="fas fa-calendar mr-1"></i>
+                                            {{ journey.start_date|date:"Y年m月d日" }}
                                         </div>
-
-                                        <!-- 國家和時間資訊 -->
-                                        <div class="flex items-center gap-4 mb-3">
-                                            <div class="badge badge-primary badge-outline">
-                                                <i class="fas fa-map-marker-alt mr-1"></i>
-                                                {{ journey.country.name }}
-                                            </div>
-                                            {% if journey.city %}
-                                                <div class="badge badge-primary badge-outline">
-                                                    <i class="fas fa-map-marker-alt mr-1"></i>
-                                                    {{ journey.city.name }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                        <div class="flex items-center gap-4 mb-3">
-                                            <div class="text-xs text-base-content opacity-60">
-                                                <i class="fas fa-calendar mr-1"></i>
-                                                {{ journey.start_date|date:"Y年m月d日" }}
-                                            </div>
-                                        </div>
-
-                                        <p class="text-sm leading-relaxed">{{ journey.description|truncatewords:20 }}</p>
                                     </div>
+
+                                    <p class="text-sm leading-relaxed">{{ journey.description|truncatewords:20 }}</p>
                                 </div>
                             </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <!-- 統計資訊 -->
-    <section class="py-16 bg-base-200 mt-16">
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold text-base-content mb-4">
-                <i class="fas fa-chart-line text-primary mr-2"></i>
-                旅行足跡
-            </h2>
-        </div>
-
-        <div class="container mx-auto px-4">
-            <div class="stats stats-vertical lg:stats-horizontal shadow w-full">
-                <div class="stat place-items-center">
-                    <div class="stat-title">造訪城市</div>
-                    <div class="stat-value text-primary">{{ total_cities }}</div>
-                    <div class="stat-desc">遍布東亞各地</div>
-                </div>
-
-                <div class="stat place-items-center">
-                    <div class="stat-title">拍攝照片</div>
-                    <div class="stat-value text-secondary">{{ total_photos }}</div>
-                    <div class="stat-desc">珍貴回憶</div>
-                </div>
-
-                <div class="stat place-items-center">
-                    <div class="stat-title">旅行天數</div>
-                    <div class="stat-value text-accent">{{ total_days }}</div>
-                    <div class="stat-desc">充滿冒險</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 最新更新 -->
-    <section class="py-16">
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold text-base-content mb-4">
-                <i class="fas fa-clock text-info mr-2"></i>
-                最新更新
-            </h2>
-        </div>
-
-        <div class="container mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-                {% for journey in recent_journeys %}
-                    <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow cursor-pointer"
-                         onclick="window.location.href='/journeys/{{ journey.id }}/itineraries'">
-                        <div class="card-body">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="badge badge-primary">{{ journey.created_at|date:"Y年m月d日" }}</div>
-                                <div class="badge badge-outline">{{ journey.country.name }}</div>
-                            </div>
-                            <h3 class="card-title">{{ journey.title }}</h3>
-                            <p>{{ journey.description }}</p>
                         </div>
                     </div>
                 {% endfor %}
             </div>
-        </div>
-    </section>
+        </section>
+
+        <!-- 右側：最新更新 -->
+        <section>
+            <div class="text-center mb-8">
+                <h2 class="text-4xl font-bold text-base-content mb-4">
+                    <i class="fas fa-clock text-info mr-2"></i>
+                    最新更新
+                </h2>
+            </div>
+
+            <div class="flex flex-col gap-6">
+                {% for journey in recent_journeys %}
+                    <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer transform hover:scale-105"
+                         onclick="window.location.href='/journeys/{{ journey.id }}/itineraries'">
+                        <div class="card-body">
+                            <div class="flex items-start gap-4">
+                                <!-- 照片區塊 -->
+                                <div class="flex-shrink-0">
+                                    {% if journey.journeyphoto %}
+                                        <div class="avatar">
+                                            <div class="w-24 h-24 rounded-lg">
+                                                <img src="{{ journey.journeyphoto.image.url }}"
+                                                     alt="{{ journey.journeyphoto.caption|default:journey.title }}"
+                                                     class="w-full h-full object-cover">
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="avatar placeholder">
+                                            <div class="w-24 h-24 bg-neutral text-neutral-content rounded-lg">
+                                                <i class="fas fa-image text-2xl"></i>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- 內容區塊 -->
+                                <div class="flex-1">
+                                    <div class="mb-2">
+                                        <h2 class="card-title">
+                                            {{ journey.title }}
+                                        </h2>
+                                    </div>
+
+                                    <!-- 國家和時間資訊 -->
+                                    <div class="flex items-center gap-4 mb-3">
+                                        <div class="badge badge-info badge-outline">
+                                            <i class="fas fa-map-marker-alt mr-1"></i>
+                                            {{ journey.country.name }}
+                                        </div>
+                                        {% if journey.city %}
+                                            <div class="badge badge-info badge-outline">
+                                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                                {{ journey.city.name }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex items-center gap-4 mb-3">
+                                        <div class="text-xs text-base-content opacity-60">
+                                            <i class="fas fa-calendar mr-1"></i>
+                                            {{ journey.start_date|date:"Y年m月d日" }}
+                                        </div>
+                                        <div class="text-xs text-base-content opacity-60">
+                                            <i class="fas fa-edit mr-1"></i>
+                                            更新：{{ journey.updated_at|date:"Y年m月d日" }}
+                                        </div>
+                                    </div>
+
+                                    <p class="text-sm leading-relaxed">{{ journey.description|truncatewords:20 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
 {% endblock %}
