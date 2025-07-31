@@ -77,12 +77,30 @@
         </div>
 
         {% if locations %}
-            <div id="locationsList" class="space-y-6">
-                {% for location in locations %}
-                    <div class="location-item card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-move"
-                         data-location-id="{{ location.id }}"
-                         draggable="true">
-                        <div class="card-body">
+            <!-- 時段分組顯示 - 電腦版三欄，手機版垂直 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {% for time_slot_key, time_slot_data in locations_by_time_slot.items %}
+                    <div class="time-slot-section" data-time-slot="{{ time_slot_key }}">
+                        <!-- 時段標題 -->
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="badge badge-lg badge-primary gap-2">
+                                <i class="fas {{ time_slot_data.icon }}"></i>
+                                {{ time_slot_data.title }}
+                            </div>
+                            <div class="text-sm text-base-content opacity-60">
+                                共 {{ time_slot_data.locations|length }} 個地點
+                            </div>
+                        </div>
+                        
+                        <!-- 該時段的地點列表 -->
+                        <div class="locations-container space-y-4 min-h-[200px] p-4 bg-base-200 rounded-lg" id="locationsList-{{ time_slot_key }}">
+                            {% if time_slot_data.locations %}
+                                {% for location in time_slot_data.locations %}
+                                    <div class="location-item card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-move"
+                                         data-location-id="{{ location.id }}"
+                                         data-time-slot="{{ time_slot_key }}"
+                                         draggable="true">
+                                        <div class="card-body">
                             <!-- 桌面版：左右佈局，手機版：上下佈局 -->
                             <div class="flex flex-col lg:flex-row items-start gap-6">
                                 <!-- 順序標籤和拖拉指示器 -->
@@ -165,7 +183,7 @@
 
                                     <!-- 操作按鈕 -->
                                     <div class="flex flex-wrap gap-2">
-                                        <button onclick="openEditLocationModal({{ location.id }}, '{{ location.name|escapejs }}', {{ location.arrived_hour|default:'null' }}, {{ location.arrived_minute|default:'null' }}, {{ location.departure_hour|default:'null' }}, {{ location.departure_minute|default:'null' }})"
+                                        <button onclick="openEditLocationModal({{ location.id }}, '{{ location.name|escapejs }}', '{{ location.time_slot }}', {{ location.arrived_hour|default:'null' }}, {{ location.arrived_minute|default:'null' }}, {{ location.departure_hour|default:'null' }}, {{ location.departure_minute|default:'null' }})"
                                                 class="btn btn-sm btn-outline btn-secondary">
                                             <i class="fas fa-edit mr-1"></i>
                                             編輯
@@ -226,7 +244,16 @@
                                         </div>
                                     </div>
                                 {% endif %}
-                            </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-8 text-base-content opacity-50">
+                                    <i class="fas fa-clock text-2xl mb-2"></i>
+                                    <p>此時段暫無地點</p>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 {% endfor %}
@@ -499,6 +526,18 @@
                               rows="2"></textarea>
                 </div>
 
+                <!-- 時段選擇 -->
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">時段</span>
+                    </label>
+                    <select name="time_slot" class="select select-bordered w-full">
+                        <option value="morning" selected>上午</option>
+                        <option value="afternoon">下午</option>
+                        <option value="evening">晚上</option>
+                    </select>
+                </div>
+
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="form-control">
                         <label class="label">
@@ -573,7 +612,7 @@
 
                 <div class="alert alert-info mb-4">
                     <i class="fas fa-info-circle mr-2"></i>
-                    編輯地點時只能修改到達和離開時間，其他資訊請於後台管理介面修改。
+                    編輯地點時可修改時段、到達和離開時間，其他資訊請於後台管理介面修改。
                 </div>
 
                 <div class="form-control w-full mb-4">
@@ -581,6 +620,18 @@
                         <span class="label-text">地點名稱</span>
                     </label>
                     <input type="text" id="editLocationName" class="input input-bordered w-full" disabled>
+                </div>
+
+                <!-- 時段選擇 -->
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text">時段</span>
+                    </label>
+                    <select id="editTimeSlot" name="time_slot" class="select select-bordered w-full">
+                        <option value="morning">上午</option>
+                        <option value="afternoon">下午</option>
+                        <option value="evening">晚上</option>
+                    </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
@@ -642,9 +693,10 @@
             document.getElementById('createLocationForm').reset();
         }
 
-        function openEditLocationModal(locationId, locationName, arrivedHour, arrivedMinute, departureHour, departureMinute) {
+        function openEditLocationModal(locationId, locationName, timeSlot, arrivedHour, arrivedMinute, departureHour, departureMinute) {
             document.getElementById('editLocationId').value = locationId;
             document.getElementById('editLocationName').value = locationName;
+            document.getElementById('editTimeSlot').value = timeSlot;
 
             // 設定時間值
             document.getElementById('editArrivedHour').value = arrivedHour !== null ? arrivedHour : '';
@@ -692,7 +744,6 @@
         let draggedElement = null;
 
         function initializeDragAndDrop() {
-            const locationsList = document.getElementById('locationsList');
             const locationItems = document.querySelectorAll('.location-item');
 
             locationItems.forEach(item => {
@@ -744,12 +795,18 @@
             if (draggedElement !== this) {
                 const rect = this.getBoundingClientRect();
                 const midY = rect.top + rect.height / 2;
-                const locationsList = document.getElementById('locationsList');
+                
+                // 獲取目標時段容器
+                const targetTimeSlot = this.getAttribute('data-time-slot');
+                const targetContainer = this.closest('.locations-container');
+                
+                // 更新被拖拉元素的時段屬性
+                draggedElement.setAttribute('data-time-slot', targetTimeSlot);
 
                 if (e.clientY < midY) {
-                    locationsList.insertBefore(draggedElement, this);
+                    targetContainer.insertBefore(draggedElement, this);
                 } else {
-                    locationsList.insertBefore(draggedElement, this.nextSibling);
+                    targetContainer.insertBefore(draggedElement, this.nextSibling);
                 }
 
                 // 更新順序到伺服器
@@ -773,9 +830,11 @@
 
         function updateLocationOrder() {
             const locationItems = document.querySelectorAll('.location-item');
-            const locationIds = Array.from(locationItems).map(item =>
-                parseInt(item.getAttribute('data-location-id'))
-            );
+            const locationData = Array.from(locationItems).map((item, index) => ({
+                id: parseInt(item.getAttribute('data-location-id')),
+                time_slot: item.getAttribute('data-time-slot'),
+                order: index + 1
+            }));
 
             fetch(`/itineraries/{{ itinerary.id }}/locations/reorder/`, {
                 method: 'POST',
@@ -784,20 +843,26 @@
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 },
                 body: JSON.stringify({
-                    location_ids: locationIds
+                    locations: locationData
                 })
             })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // 更新順序標籤
-                        locationItems.forEach((item, index) => {
-                            const badge = item.querySelector('.badge');
-                            if (badge) {
-                                const icon = badge.querySelector('i');
-                                badge.innerHTML = '';
-                                badge.appendChild(icon);
-                                badge.appendChild(document.createTextNode(` ${index + 1}`));
+                        // 更新每個時段內的順序標籤
+                        ['morning', 'afternoon', 'evening'].forEach(timeSlot => {
+                            const container = document.getElementById(`locationsList-${timeSlot}`);
+                            if (container) {
+                                const items = container.querySelectorAll('.location-item');
+                                items.forEach((item, index) => {
+                                    const badge = item.querySelector('.badge');
+                                    if (badge) {
+                                        const icon = badge.querySelector('i');
+                                        badge.innerHTML = '';
+                                        badge.appendChild(icon);
+                                        badge.appendChild(document.createTextNode(` ${index + 1}`));
+                                    }
+                                });
                             }
                         });
 
@@ -1129,6 +1194,27 @@
 
         .location-item:not([draggable="true"]) .photo-carousel {
             pointer-events: auto;
+        }
+        
+        /* 時段容器樣式 */
+        .locations-container {
+            min-height: 200px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .locations-container.drag-over {
+            background-color: rgba(59, 130, 246, 0.1);
+            border: 2px dashed #3b82f6;
+        }
+        
+        /* 空時段的提示 */
+        .locations-container:empty::after {
+            content: "拖拉地點到此時段";
+            display: block;
+            text-align: center;
+            padding: 2rem;
+            color: rgba(0, 0, 0, 0.3);
+            font-style: italic;
         }
     </style>
 {% endblock %}

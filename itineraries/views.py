@@ -25,9 +25,30 @@ def location_list(request, itinerary_id):
     itinerary = get_object_or_404(Itinerary, id=itinerary_id)
     locations = Location.objects.filter(itinerary=itinerary).order_by('order')
     
+    # 按時段分組地點
+    from .models import TimeSlotChoices
+    locations_by_time_slot = {
+        'morning': {
+            'title': '上午',
+            'icon': 'fa-sun',
+            'locations': locations.filter(time_slot=TimeSlotChoices.MORNING)
+        },
+        'afternoon': {
+            'title': '下午', 
+            'icon': 'fa-cloud-sun',
+            'locations': locations.filter(time_slot=TimeSlotChoices.AFTERNOON)
+        },
+        'evening': {
+            'title': '晚上',
+            'icon': 'fa-moon',
+            'locations': locations.filter(time_slot=TimeSlotChoices.EVENING)
+        }
+    }
+    
     context = {
         'itinerary': itinerary,
         'locations': locations,
+        'locations_by_time_slot': locations_by_time_slot,
     }
     return render(request, 'locations.html', context)
 
@@ -75,6 +96,7 @@ def create_location(request, itinerary_id):
         arrived_minute = request.POST.get('arrived_minute')
         departure_hour = request.POST.get('departure_hour')
         departure_minute = request.POST.get('departure_minute')
+        time_slot = request.POST.get('time_slot', 'morning')
         
         # 驗證必填欄位
         if not all([name, address, google_maps_url]):
@@ -85,6 +107,14 @@ def create_location(request, itinerary_id):
             max_order=models.Max('order')
         )['max_order'] or 0
         
+        # 設定時段
+        from .models import TimeSlotChoices
+        time_slot_map = {
+            'morning': TimeSlotChoices.MORNING,
+            'afternoon': TimeSlotChoices.AFTERNOON,
+            'evening': TimeSlotChoices.EVENING
+        }
+        
         # 建立地點
         location = Location.objects.create(
             itinerary=itinerary,
@@ -92,7 +122,8 @@ def create_location(request, itinerary_id):
             address=address,
             google_maps_url=google_maps_url,
             description=description,
-            order=max_order + 1
+            order=max_order + 1,
+            time_slot=time_slot_map.get(time_slot, TimeSlotChoices.MORNING)
         )
         
         # 設定時間（如果有提供）
@@ -141,11 +172,12 @@ def edit_location(request, itinerary_id, location_id):
         itinerary = get_object_or_404(Itinerary, id=itinerary_id)
         location = get_object_or_404(Location, id=location_id, itinerary=itinerary)
         
-        # 獲取表單數據（編輯時只能修改到達和離開時間）
+        # 獲取表單數據（編輯時可以修改時段和到達離開時間）
         arrived_hour = request.POST.get('arrived_hour')
         arrived_minute = request.POST.get('arrived_minute')
         departure_hour = request.POST.get('departure_hour')
         departure_minute = request.POST.get('departure_minute')
+        time_slot = request.POST.get('time_slot', 'morning')
         
         # 更新時間
         if arrived_hour and arrived_minute:
@@ -161,6 +193,15 @@ def edit_location(request, itinerary_id, location_id):
         else:
             location.departure_hour = None
             location.departure_minute = None
+        
+        # 更新時段
+        from .models import TimeSlotChoices
+        time_slot_map = {
+            'morning': TimeSlotChoices.MORNING,
+            'afternoon': TimeSlotChoices.AFTERNOON,
+            'evening': TimeSlotChoices.EVENING
+        }
+        location.time_slot = time_slot_map.get(time_slot, TimeSlotChoices.MORNING)
         
         location.save()
         
@@ -215,39 +256,49 @@ def delete_location(request, itinerary_id, location_id):
 
 @require_http_methods(["POST"])
 def reorder_locations(request, itinerary_id):
-    """重新排序地點"""
+    """重新排序地點並更新時段"""
     try:
         itinerary = get_object_or_404(Itinerary, id=itinerary_id)
         
-        # 獲取新的順序列表（location_id 的陣列）
+        # 獲取新的地點資料
         import json
         data = json.loads(request.body)
-        location_ids = data.get('location_ids', [])
+        locations_data = data.get('locations', [])
         
-        if not location_ids:
-            return JsonResponse({'error': '請提供地點順序列表'}, status=400)
+        if not locations_data:
+            return JsonResponse({'error': '請提供地點資料'}, status=400)
         
-        # 驗證所有 location_ids 都屬於這個行程
-        existing_locations = set(
-            Location.objects.filter(
-                itinerary=itinerary,
-                id__in=location_ids
-            ).values_list('id', flat=True)
+        # 驗證所有地點都屬於這個行程
+        location_ids = [loc['id'] for loc in locations_data]
+        existing_locations = Location.objects.filter(
+            itinerary=itinerary,
+            id__in=location_ids
         )
         
-        if len(existing_locations) != len(location_ids):
-            return JsonResponse({'error': '無效的地點順序列表'}, status=400)
+        if existing_locations.count() != len(location_ids):
+            return JsonResponse({'error': '無效的地點列表'}, status=400)
         
-        # 批量更新順序
-        for new_order, location_id in enumerate(location_ids, 1):
-            Location.objects.filter(
-                id=location_id,
-                itinerary=itinerary
-            ).update(order=new_order)
+        # 批量更新順序和時段
+        from .models import TimeSlotChoices
+        time_slot_map = {
+            'morning': TimeSlotChoices.MORNING,
+            'afternoon': TimeSlotChoices.AFTERNOON,
+            'evening': TimeSlotChoices.EVENING
+        }
+        
+        for loc_data in locations_data:
+            location = existing_locations.get(id=loc_data['id'])
+            location.order = loc_data['order']
+            
+            # 更新時段
+            time_slot_key = loc_data.get('time_slot', 'morning')
+            location.time_slot = time_slot_map.get(time_slot_key, TimeSlotChoices.MORNING)
+            
+            location.save()
         
         return JsonResponse({
             'success': True,
-            'message': '地點順序已更新'
+            'message': '地點順序和時段已更新'
         })
         
     except json.JSONDecodeError:

@@ -3,6 +3,12 @@ from journeys.models import Journey
 import uuid
 
 
+class TimeSlotChoices(models.TextChoices):
+    MORNING = 'morning', '上午'
+    AFTERNOON = 'afternoon', '下午'
+    EVENING = 'evening', '晚上'
+
+
 # Create your models here.
 class Itinerary(models.Model):
     journey = models.ForeignKey(Journey, on_delete=models.CASCADE)
@@ -17,7 +23,7 @@ class Itinerary(models.Model):
     class Meta:
         verbose_name = "行程"
         verbose_name_plural = "行程列表"
-    
+
     def __str__(self):
         return f"{self.journey.title} - {self.title}"
 
@@ -38,7 +44,7 @@ class ItineraryPhoto(models.Model):
     class Meta:
         verbose_name = "行程照片"
         verbose_name_plural = "行程照片列表"
-    
+
     def __str__(self):
         return f"{self.itinerary.title} - 照片"
 
@@ -58,13 +64,17 @@ class Location(models.Model):
     departure_hour = models.IntegerField(blank=True, null=True, help_text="離開小時 (0-23)")
     departure_minute = models.IntegerField(blank=True, null=True, help_text="離開分鐘 (0-59)")
     order = models.PositiveIntegerField(default=0, help_text="在行程中的順序")
+    time_slot = models.CharField(max_length=50, blank=True, null=False,
+                                 default=TimeSlotChoices.MORNING,
+                                 choices=TimeSlotChoices.choices,
+                                 help_text="時間段 (例如: '上午', '下午', '晚上')")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = "地點"
         verbose_name_plural = "地點列表"
         ordering = ['order']
-    
+
     def __str__(self):
         return f"{self.itinerary.title} - {self.name}"
 
@@ -85,6 +95,6 @@ class LocationPhoto(models.Model):
     class Meta:
         verbose_name = "地點照片"
         verbose_name_plural = "地點照片列表"
-    
+
     def __str__(self):
         return f"{self.location.name} - 照片"
