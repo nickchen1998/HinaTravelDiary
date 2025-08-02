@@ -90,8 +90,12 @@ WSGI_APPLICATION = 'HinaTravelDiary.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv("POSTGRES_DB", "TravelDiary"),
+        'USER': os.getenv("POSTGRES_USER", "postgres"),
+        'PASSWORD': os.getenv("POSTGRES_PASSWORD", "postgres"),
+        'HOST': os.getenv("POSTGRES_HOST", "traveldiary-poestgres"),
+        'PORT': os.getenv("POSTGRES_PORT", "5432"),
     }
 }
 
@@ -138,7 +142,7 @@ STATICFILES_DIRS = [
 
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = BASE_DIR.parent / 'media'
 
 # WhiteNoise configuration
 WHITENOISE_USE_FINDERS = True
@@ -153,9 +157,9 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Admin site configuration
-ADMIN_SITE_HEADER = "Hina 的旅行日記 - 管理後台"
-ADMIN_SITE_TITLE = "Hina 的旅行日記"
-ADMIN_INDEX_TITLE = "歡迎來到 Hina 的旅行日記管理後台"
+ADMIN_SITE_HEADER = "旅行日記 TravelDiary - 管理後台"
+ADMIN_SITE_TITLE = "旅行日記 TravelDiary"
+ADMIN_INDEX_TITLE = "歡迎來到 旅行日記 TravelDiary 管理後台"
 
 GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 

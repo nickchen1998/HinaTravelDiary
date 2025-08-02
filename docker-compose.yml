@@ -3,28 +3,74 @@ version: "3.8"
 services:
   django:
     build: .
-    container_name: hina-travel-diary-django
-    command: sh -c "python manage.py collectstatic --noinput && gunicorn HinaTravelDiary.wsgi:application --bind 0.0.0.0:8080 --workers 3 --reload"
+    container_name: traveldiary-django
+#    command: sh -c "python manage.py collectstatic --noinput && gunicorn HinaTravelDiary.wsgi:application --bind 0.0.0.0:8080 --workers 3"
+    command: sh -c "python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8080"
     expose:
       - 8080
     ports:
       - "8080:8080"
     volumes:
-      - ${MEDIA_DIR:-./media}:/app/media
-      - ${SQLITE_DB:-./db.sqlite3}:/app/db.sqlite3
-      - ./staticfiles:/app/staticfiles
+      - ${MEDIA_DIR}:/media
       - .:/app
     working_dir: /app
+    depends_on:
+      - postgres
     restart: unless-stopped
+    networks:
+      - traveldiary-network
 
   nginx:
     image: nginx:1.25
-    container_name: hina-travel-diary-nginx
+    container_name: traveldiary-nginx
     ports:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ${MEDIA_DIR:-./media}:/app/media
+      - ${MEDIA_DIR}:/media
       - ./staticfiles:/app/staticfiles
     depends_on:
       - django
+    restart: unless-stopped
+    networks:
+      - traveldiary-network
+
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: traveldiary-poestgres
+    environment:
+      - POSTGRES_DB=TravelDiary
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ${POSTGRES_VOLUME}:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d TravelDiary" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - traveldiary-network
+
+  postgres-init:
+    image: ankane/pgvector:latest
+    container_name: traveldiary-poestgres-init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - PGPASSWORD=${POSTGRES_PASSWORD:-postgres}
+    command: |
+      bash -c "
+        psql -h postgres -U postgres -d TravelDiary -c 'CREATE EXTENSION IF NOT EXISTS vector;';
+        echo 'Vector extension enabled successfully';
+      "
+    restart: "no"
+    networks:
+      - traveldiary-network
+
+networks:
+  traveldiary-network:
+    driver: bridge
