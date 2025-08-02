@@ -79,6 +79,15 @@ TravelDiary/
     python manage.py setup_google_oauth
     ```
 
+5. 建立 superuser：
+
+    在容器中執行以下命令來建立管理員帳號：
+
+    ```bash
+    docker exec -it traveldiary-django /bin/bash
+    python manage.py createsuperuser
+    ```
+
 ## 開發環境設定
 
 1. 請確保已安裝 Docker、Docker Compose、Python 3.10 以上版本、Poetry 等工具。
@@ -123,6 +132,8 @@ TravelDiary/
 3. **媒體檔案**會儲存在 `MEDIA_DIR` 指定的路徑，請確保該路徑有適當的讀寫權限
 
 4. **資料庫備份**：定期備份 `POSTGRES_VOLUME` 路徑下的資料
+
+5. **登入方式**：雖然登入頁面中有提供帳號及密碼，但原則上此帳號密碼僅適用於開發環境，正式環境請使用 Google OAuth 登入。
 
 ## 聯絡資訊
 
