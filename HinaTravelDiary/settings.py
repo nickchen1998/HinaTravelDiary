@@ -160,5 +160,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ADMIN_SITE_HEADER = "旅行日記 TravelDiary - 管理後台"
 ADMIN_SITE_TITLE = "旅行日記 TravelDiary"
 ADMIN_INDEX_TITLE = "歡迎來到 旅行日記 TravelDiary 管理後台"
-
-GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
